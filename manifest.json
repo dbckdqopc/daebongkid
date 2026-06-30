@@ -1,0 +1,40 @@
+{
+  "name": "말씀씨앗",
+  "short_name": "말씀씨앗",
+  "description": "2026 총회교육자원부 아동부 성경공부 앱 — 대구대봉교회 아동2부",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f0f4f0",
+  "theme_color": "#4CAF50",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "lifestyle"],
+  "shortcuts": [
+    {
+      "name": "퀴즈 풀기",
+      "short_name": "퀴즈",
+      "description": "이번 주 퀴즈 바로가기",
+      "url": "./말씀씨앗.html#quiz"
+    },
+    {
+      "name": "이번 주 말씀",
+      "short_name": "말씀",
+      "description": "이번 주 말씀 보기",
+      "url": "./index.html"
+    }
+  ]
+}
