@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>말씀씨앗 교사 대시보드</title>
+<style>
+:root{--green:#4CAF50;--green2:#2e7d32;--blue:#1976D2;--orange:#F57C00;--red:#C62828;--bg:#f0f4f0;--card:#fff;--text:#1a1a1a;--sub:#555;--border:#e0e0e0;--radius:14px;--shadow:0 2px 12px rgba(0,0,0,.10);}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--bg);color:var(--text);max-width:900px;margin:0 auto;padding:16px;}
+h1{color:#fff;font-size:1.3rem;}
+.topbar{background:var(--green2);color:#fff;border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;}
+.topbar .sub{font-size:.82rem;opacity:.8;margin-top:2px;}
+.card{background:var(--card);border-radius:var(--radius);padding:18px;margin-bottom:16px;box-shadow:var(--shadow);}
+.card h2{font-size:1rem;font-weight:700;color:var(--green2);margin-bottom:12px;}
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.stat-box{background:var(--card);border-radius:12px;padding:16px;text-align:center;box-shadow:var(--shadow);}
+.stat-box .num{font-size:1.8rem;font-weight:800;color:var(--green2);}
+.stat-box .lbl{font-size:.75rem;color:var(--sub);margin-top:4px;}
+table{width:100%;border-collapse:collapse;font-size:.88rem;}
+th{background:#e8f5e9;color:var(--green2);padding:10px 8px;text-align:left;font-weight:700;}
+td{padding:9px 8px;border-bottom:1px solid var(--border);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#f9fbe7;}
+.score-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.78rem;font-weight:700;}
+.s-100{background:#e8f5e9;color:#1b5e20;}
+.s-80{background:#f3e5f5;color:#6a1b9a;}
+.s-60{background:#fff3e0;color:#e65100;}
+.s-low{background:#ffebee;color:#c62828;}
+/* login */
+#login-wrap{position:fixed;inset:0;background:linear-gradient(160deg,#1b5e20,#4CAF50);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;}
+#login-wrap h1{color:#fff;font-size:1.6rem;font-weight:800;}
+#login-wrap p{color:rgba(255,255,255,.8);font-size:.88rem;}
+#login-wrap input,#login-wrap select{width:280px;padding:13px 16px;border-radius:10px;border:none;font-size:1rem;text-align:center;outline:none;}
+#login-wrap button{width:280px;padding:13px;border-radius:10px;border:none;background:#fff;color:var(--green2);font-size:1rem;font-weight:800;cursor:pointer;}
+.err{color:#ffcdd2;font-size:.85rem;min-height:20px;}
+/* firebase config */
+#config-wrap{position:fixed;inset:0;background:#1b5e20;display:none;flex-direction:column;align-items:center;justify-content:flex-start;padding:30px 20px;overflow-y:auto;}
+#config-wrap h2{color:#fff;margin-bottom:8px;}
+#config-wrap p{color:rgba(255,255,255,.8);font-size:.85rem;margin-bottom:16px;text-align:center;line-height:1.6;}
+#config-wrap textarea{width:100%;max-width:500px;height:200px;padding:12px;border-radius:10px;border:none;font-size:.82rem;font-family:monospace;}
+#config-wrap button{margin-top:12px;width:100%;max-width:500px;padding:13px;border-radius:10px;border:none;background:#fff;color:var(--green2);font-size:1rem;font-weight:800;cursor:pointer;}
+#config-wrap a{color:#a5d6a7;font-size:.82rem;margin-top:8px;}
+.tag{display:inline-block;padding:2px 8px;border-radius:8px;font-size:.75rem;font-weight:600;background:#e8f5e9;color:var(--green2);margin-right:4px;}
+.btn-refresh{padding:7px 14px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;}
+.filter-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;}
+.filter-row select{padding:6px 10px;border-radius:8px;border:1px solid var(--border);font-size:.85rem;}
+</style>
+</head>
+<body>
+
+<!-- Firebase Config Setup -->
+<div id="config-wrap">
+  <h2>🔧 Firebase 연결 설정</h2>
+  <p>처음 한 번만 설정하면 됩니다.<br>
+  아래 단계에 따라 Firebase 설정 코드를 붙여넣으세요.</p>
+  <p style="background:rgba(255,255,255,.15);border-radius:8px;padding:12px;font-size:.82rem;line-height:1.8;text-align:left;width:100%;max-width:500px">
+    ① <strong style="color:#fff">console.firebase.google.com</strong> 접속<br>
+    ② 프로젝트 만들기 → 이름 입력 (예: malsseumssiaat)<br>
+    ③ 프로젝트 설정(⚙️) → 일반 → 앱 추가(&lt;/&gt;웹)<br>
+    ④ 앱 등록 후 나오는 <strong style="color:#fff">firebaseConfig</strong> 객체 복사<br>
+    ⑤ 아래에 붙여넣기 후 저장
+  </p>
+  <textarea id="config-input" placeholder='{
+  "apiKey": "...",
+  "authDomain": "...",
+  "databaseURL": "https://...firebaseio.com",
+  "projectId": "...",
+  "storageBucket": "...",
+  "messagingSenderId": "...",
+  "appId": "..."
+}'></textarea>
+  <div class="err" id="config-err"></div>
+  <button onclick="saveConfig()">저장하고 시작하기</button>
+  <a href="#" onclick="skipConfig()">나중에 설정하기 (오프라인 모드)</a>
+</div>
+
+<!-- Login -->
+<div id="login-wrap">
+  <div style="font-size:3rem">📋</div>
+  <h1>교사 대시보드</h1>
+  <p>대구대봉교회 아동2부</p>
+  <input type="password" id="t-pw-input" placeholder="교사 비밀번호"
+    onkeydown="if(event.key==='Enter')teacherLogin()">
+  <button onclick="teacherLogin()">로그인</button>
+  <div class="err" id="t-pw-err"></div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard" style="display:none">
+  <div class="topbar">
+    <div>
+      <h1>📋 교사 대시보드</h1>
+      <div class="sub">대구대봉교회 아동2부 · 말씀씨앗</div>
+    </div>
+    <button class="btn-refresh" onclick="loadData()">새로고침</button>
+  </div>
+
+  <div class="stat-row" id="summary-stats">
+    <div class="stat-box"><div class="num" id="s-students">-</div><div class="lbl">참여 학생</div></div>
+    <div class="stat-box"><div class="num" id="s-quizzes">-</div><div class="lbl">총 퀴즈 완료</div></div>
+    <div class="stat-box"><div class="num" id="s-avg">-</div><div class="lbl">전체 평균점수</div></div>
+    <div class="stat-box"><div class="num" id="s-attend">-</div><div class="lbl">이번 주 출석</div></div>
+  </div>
+
+  <div class="card">
+    <h2>🏆 학생별 퀴즈 기록</h2>
+    <div class="filter-row">
+      <select id="filter-lesson" onchange="renderTable()">
+        <option value="">전체 과</option>
+      </select>
+      <select id="filter-student" onchange="renderTable()">
+        <option value="">전체 학생</option>
+      </select>
+    </div>
+    <div id="table-wrap">
+      <p style="color:#555;font-size:.9rem">데이터를 불러오는 중...</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📅 이번 주 출석 현황</h2>
+    <div id="attend-wrap">
+      <p style="color:#555;font-size:.9rem">데이터를 불러오는 중...</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== CONFIG =====
+const T_PW = 'daebong';          // 교사 비밀번호
+const CONFIG_KEY = 'malsseumssiat_fb_config';
+const T_AUTH_KEY = 'malsseumssiat_teacher_auth';
+
+let db = null;
+let allData = [];
+
+// ===== LOGIN =====
+function teacherLogin(){
+  const v = document.getElementById('t-pw-input').value;
+  if(v === T_PW){
+    localStorage.setItem(T_AUTH_KEY,'1');
+    document.getElementById('login-wrap').style.display='none';
+    initFirebase();
+  }else{
+    document.getElementById('t-pw-err').textContent = '비밀번호가 틀렸어요.';
+    document.getElementById('t-pw-input').value = '';
+  }
+}
+
+// ===== FIREBASE CONFIG =====
+const HARDCODED_CONFIG = {
+  apiKey: "AIzaSyCzXbLUt95DJw9O5zTSjgF7p5-Q7Nfg_dE",
+  authDomain: "daebongteacher.firebaseapp.com",
+  databaseURL: "https://daebongteacher-default-rtdb.firebaseio.com",
+  projectId: "daebongteacher",
+  storageBucket: "daebongteacher.firebasestorage.app",
+  messagingSenderId: "758425200131",
+  appId: "1:758425200131:web:f81b18d55f6472a5f55036",
+  measurementId: "G-GZE29PGM0S"
+};
+function getConfig(){
+  return HARDCODED_CONFIG;
+}
+function saveConfig(){
+  const raw = document.getElementById('config-input').value.trim();
+  try{
+    const cfg = JSON.parse(raw);
+    if(!cfg.apiKey) throw new Error('apiKey 없음');
+    localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
+    document.getElementById('config-wrap').style.display='none';
+    initFirebase();
+  }catch(e){
+    document.getElementById('config-err').textContent = '설정이 올바르지 않아요. JSON 형식을 확인하세요.';
+  }
+}
+function skipConfig(){
+  document.getElementById('config-wrap').style.display='none';
+  document.getElementById('dashboard').style.display='block';
+  document.getElementById('table-wrap').innerHTML='<p style="color:#555">Firebase 미연결 상태입니다. 설정 후 새로고침하세요.</p>';
+}
+
+function initFirebase(){
+  const cfg = HARDCODED_CONFIG;
+  // 항상 대시보드 표시
+  document.getElementById('config-wrap').style.display='none';
+  document.getElementById('dashboard').style.display='block';
+  document.getElementById('table-wrap').innerHTML='<p style="color:#555">Firebase 연결 중...</p>';
+  // Firebase SDK 동적 로드
+  const s1 = document.createElement('script');
+  s1.src = 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js';
+  s1.onerror = () => {
+    document.getElementById('table-wrap').innerHTML='<p style="color:#c62828">❌ Firebase SDK 로드 실패 (네트워크 확인)</p>';
+  };
+  s1.onload = () => {
+    const s2 = document.createElement('script');
+    s2.src = 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js';
+    s2.onerror = () => {
+      document.getElementById('table-wrap').innerHTML='<p style="color:#c62828">❌ Firebase Database SDK 로드 실패</p>';
+    };
+    s2.onload = () => {
+      try{
+        if(!firebase.apps.length) firebase.initializeApp(cfg);
+        db = firebase.database();
+        loadData();
+      }catch(e){
+        document.getElementById('table-wrap').innerHTML='<p style="color:#c62828">❌ Firebase 초기화 오류: '+e.message+'</p>';
+      }
+    };
+    document.head.appendChild(s2);
+  };
+  document.head.appendChild(s1);
+}
+
+// ===== LOAD DATA =====
+async function loadData(){
+  if(!db){ return; }
+  document.getElementById('table-wrap').innerHTML='<p style="color:#555">불러오는 중...</p>';
+  try{
+    const snap = await db.ref('quizResults').once('value');
+    allData = [];
+    snap.forEach(studentSnap => {
+      const nick = studentSnap.key;
+      studentSnap.forEach(resultSnap => {
+        const r = resultSnap.val();
+        allData.push({nick, ...r});
+      });
+    });
+    // attendance
+    const aSnap = await db.ref('attendance').once('value');
+    const attendData = aSnap.val()||{};
+    renderSummary(allData, attendData);
+    renderTable();
+    renderAttendance(attendData);
+    populateFilters();
+  }catch(e){
+    document.getElementById('table-wrap').innerHTML='<p style="color:#c62828">오류: '+e.message+'</p>';
+  }
+}
+
+function populateFilters(){
+  const lessons = [...new Set(allData.map(r=>r.lesson))].sort((a,b)=>a-b);
+  const students = [...new Set(allData.map(r=>r.nick))].sort();
+  const lSel = document.getElementById('filter-lesson');
+  const sSel = document.getElementById('filter-student');
+  lSel.innerHTML = '<option value="">전체 과</option>' + lessons.map(l=>`<option value="${l}">${l}과</option>`).join('');
+  sSel.innerHTML = '<option value="">전체 학생</option>' + students.map(s=>`<option value="${s}">${s}</option>`).join('');
+}
+
+function renderSummary(data, attendData){
+  const students = new Set(data.map(r=>r.nick));
+  const avg = data.length ? Math.round(data.reduce((a,b)=>a+b.score,0)/data.length) : 0;
+  const thisWk = getWeekKey(new Date());
+  const attendThisWk = Object.values(attendData).filter(weeks => Array.isArray(weeks) ? weeks.includes(thisWk) : false).length;
+  document.getElementById('s-students').textContent = students.size;
+  document.getElementById('s-quizzes').textContent = data.length;
+  document.getElementById('s-avg').textContent = avg+'점';
+  document.getElementById('s-attend').textContent = attendThisWk+'명';
+}
+
+function renderTable(){
+  const lf = document.getElementById('filter-lesson').value;
+  const sf = document.getElementById('filter-student').value;
+  let rows = allData;
+  if(lf) rows = rows.filter(r=>String(r.lesson)===lf);
+  if(sf) rows = rows.filter(r=>r.nick===sf);
+  rows = rows.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if(rows.length===0){
+    document.getElementById('table-wrap').innerHTML='<p style="color:#555;font-size:.9rem">아직 기록이 없어요.</p>';
+    return;
+  }
+
+  // 학생별 요약 (필터 없을 때)
+  if(!lf && !sf){
+    const byNick={};
+    rows.forEach(r=>{
+      if(!byNick[r.nick]) byNick[r.nick]={nick:r.nick,total:0,cnt:0,last:''};
+      byNick[r.nick].total+=r.score;
+      byNick[r.nick].cnt++;
+      if(!byNick[r.nick].last||r.date>byNick[r.nick].last) byNick[r.nick].last=r.date;
+    });
+    const summary=Object.values(byNick).sort((a,b)=>(b.total/b.cnt)-(a.total/a.cnt));
+    const summaryHtml=`<h3 style="margin-bottom:10px;color:#2e7d32;font-size:.95rem">👥 학생별 요약</h3>
+      <table style="margin-bottom:20px">
+        <thead><tr><th>이름</th><th>평균점수</th><th>참여횟수</th><th>마지막 활동</th></tr></thead>
+        <tbody>${summary.map((s,i)=>{
+          const avg=Math.round(s.total/s.cnt);
+          const cls=avg===100?'s-100':avg>=80?'s-80':avg>=60?'s-60':'s-low';
+          const medals=['🥇','🥈','🥉'];
+          return `<tr><td><strong>${medals[i]||''} ${s.nick}</strong></td>
+            <td><span class="score-badge ${cls}">${avg}점</span></td>
+            <td style="text-align:center">${s.cnt}회</td>
+            <td style="color:#888;font-size:.82rem">${s.last||'-'}</td></tr>`;
+        }).join('')}</tbody>
+      </table>`;
+    document.getElementById('table-wrap').innerHTML=summaryHtml+`
+      <h3 style="margin-bottom:10px;color:#2e7d32;font-size:.95rem">📋 전체 기록</h3>
+      <table>
+        <thead><tr><th>학생</th><th>과</th><th>점수</th><th>날짜</th></tr></thead>
+        <tbody>${rows.map(r=>{
+          const sc=r.score;
+          const cls=sc===100?'s-100':sc>=80?'s-80':sc>=60?'s-60':'s-low';
+          return `<tr><td><strong>${r.nick}</strong></td><td>${r.lesson}과</td>
+            <td><span class="score-badge ${cls}">${sc}점</span></td><td>${r.date||''}</td></tr>`;
+        }).join('')}</tbody>
+      </table>`;
+  } else {
+    document.getElementById('table-wrap').innerHTML=`
+      <table>
+        <thead><tr><th>학생</th><th>과</th><th>점수</th><th>날짜</th></tr></thead>
+        <tbody>${rows.map(r=>{
+          const sc=r.score;
+          const cls=sc===100?'s-100':sc>=80?'s-80':sc>=60?'s-60':'s-low';
+          return `<tr><td><strong>${r.nick}</strong></td><td>${r.lesson}과</td>
+            <td><span class="score-badge ${cls}">${sc}점</span></td><td>${r.date||''}</td></tr>`;
+        }).join('')}</tbody>
+      </table>`;
+  }
+}
+
+function renderAttendance(attendData){
+  const students = Object.keys(attendData);
+  if(students.length===0){
+    document.getElementById('attend-wrap').innerHTML='<p style="color:#555;font-size:.9rem">출석 기록이 없어요.</p>';
+    return;
+  }
+  const last6 = [];
+  for(let i=5;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i*7);last6.push(getWeekKey(d));}
+  document.getElementById('attend-wrap').innerHTML=`
+    <table>
+      <thead><tr><th>학생</th>${last6.map((_,i)=>`<th>${i===5?'이번 주':-(5-i)+'주 전'}</th>`).join('')}</tr></thead>
+      <tbody>${students.map(nick=>{
+        const weeks = attendData[nick]||[];
+        return `<tr><td><strong>${nick}</strong></td>${last6.map(wk=>
+          `<td style="text-align:center">${weeks.includes(wk)?'✅':'-'}</td>`).join('')}</tr>`;
+      }).join('')}</tbody>
+    </table>`;
+}
+
+function getWeekKey(date){
+  const d=new Date(date);const day=d.getDay();const sun=new Date(d);
+  sun.setDate(d.getDate()-day);return sun.toISOString().slice(0,10);
+}
+
+// ===== INIT =====
+window.onload = function(){
+  if(localStorage.getItem(T_AUTH_KEY)==='1'){
+    document.getElementById('login-wrap').style.display='none';
+    initFirebase();
+  }
+};
+</script>
+</body>
+</html>
