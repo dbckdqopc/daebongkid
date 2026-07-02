@@ -1665,6 +1665,14 @@ function go(id,_push=true){
   if(id==='screen-bookmarks') renderBookmarks();
   if(id==='screen-ranking') renderRanking();
   if(id==='screen-settings') renderStats();
+  if(id==='screen-admin'){
+    if(!adminAuthed){
+      document.getElementById('admin-login-area').style.display='block';
+      document.getElementById('admin-panel-area').style.display='none';
+    } else {
+      renderAdminPanel();
+    }
+  }
   if(id==='screen-quiz-select') renderQuizSelect();
   if(id==='screen-calendar'){const t=new Date();calYear=t.getFullYear();calMonth=t.getMonth();renderCal();}
   updateHomeStat();
@@ -1686,9 +1694,12 @@ function updateHomeStat(){
     document.getElementById('home-hero-emoji').textContent=cur.icon||'🌱';
     document.getElementById('home-hero-title').textContent=cur.title||'';
     document.getElementById('home-hero-ref').textContent='이번 주 말씀 · '+cur.n+'과 · '+cur.ref;
-    document.getElementById('home-mem-ref').textContent=L.verseRef||cur.ref||'—';
-    document.getElementById('home-mem-verse').textContent=L.verse||'';
+    const memRefEl=document.getElementById('home-mem-ref');
+    const memVerseEl=document.getElementById('home-mem-verse');
+    if(memRefEl) memRefEl.textContent=L.verseRef||cur.ref||'—';
+    if(memVerseEl) memVerseEl.textContent=L.verse||'';
   }
+  updateAttendUI();
 }
 function goThisWeek(){if(homeLesson){loadLesson(homeLesson);go('screen-lesson');}}
 function goThisWeekMem(){if(homeLesson){loadMemory(homeLesson);go('screen-memory');}}
@@ -2146,38 +2157,97 @@ function setNickname(nick){
 }
 
 function renderStats(){
-  const el=document.getElementById('settings-body');
-  if(!el) return;
+  // 정적 설정 화면의 개별 요소들을 업데이트
   const nick=getNickname();
   const h=appState.quizHistory;
   const avg=h.length?Math.round(h.reduce((a,b)=>a+b.score,0)/h.length):0;
-  el.innerHTML=`
-    <div class="card">
-      <h3>👤 내 정보</h3>
-      <div style="margin-bottom:10px">
-        <div style="font-size:.82rem;color:#888;margin-bottom:6px">현재 닉네임: <b>${nick||'(없음)'}</b></div>
-        <div style="display:flex;gap:8px">
-          <input id="nick-input" class="mem-input" placeholder="닉네임 입력" value="${nick}" style="flex:1">
-          <button class="btn btn-green" style="width:auto;padding:0 16px" onclick="setNickname(document.getElementById('nick-input').value)">저장</button>
-        </div>
-      </div>
-    </div>
-    <div class="card">
-      <h3>📊 학습 통계</h3>
-      <div style="display:flex;justify-content:space-around;text-align:center;padding:10px 0">
-        <div><div style="font-size:1.5rem;font-weight:800;color:var(--green2)">${h.length}</div><div style="font-size:.75rem;color:#888">퀴즈 완료</div></div>
-        <div><div style="font-size:1.5rem;font-weight:800;color:var(--green2)">${avg}점</div><div style="font-size:.75rem;color:#888">평균 점수</div></div>
-        <div><div style="font-size:1.5rem;font-weight:800;color:var(--green2)">${appState.memDone.size}</div><div style="font-size:.75rem;color:#888">암송 완료</div></div>
-      </div>
-    </div>
-    <div class="card">
-      <h3>⚙️ 데이터 관리</h3>
-      <button class="btn" style="background:#ffebee;color:#c62828;border:none;width:100%;margin-top:4px"
-        onclick="if(confirm('모든 학습 데이터를 초기화할까요?')){localStorage.removeItem(STORAGE_KEY);localStorage.removeItem(NICK_KEY);location.reload();}">
-        🗑️ 데이터 초기화
-      </button>
-    </div>
-    <div style="text-align:center;color:#aaa;font-size:.75rem;margin-top:16px">말씀씨앗 v2.0 · 대봉교회 어린이부</div>`;
+  const wrongCount=(appState.wrongNotes||[]).length;
+  const setEl=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  setEl('s-quiz',h.length+'회');
+  setEl('s-avg',h.length?avg+'점':'-');
+  setEl('s-bm',appState.bookmarks.size+'개');
+  setEl('s-wrong',wrongCount+'문제');
+  setEl('s-nick',nick||'(없음)');
+}
+
+// 닉네임 변경 (이름 변경 버튼)
+function changeNickname(){
+  const cur=getNickname();
+  const v=prompt('새 이름을 입력하세요',cur||'');
+  if(v===null) return;
+  if(v.trim()){
+    setNickname(v.trim());
+    renderStats();
+  } else {
+    showToast('이름을 입력해주세요');
+  }
+}
+
+// 초기화 모달
+function showResetModal(){
+  const m=document.getElementById('reset-modal');
+  if(m) m.classList.add('show');
+}
+function hideResetModal(){
+  const m=document.getElementById('reset-modal');
+  if(m) m.classList.remove('show');
+}
+function confirmReset(){
+  hideResetModal();
+  try{
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(NICK_KEY);
+    localStorage.removeItem('ADMIN_CHILD_EVENTS');
+    localStorage.removeItem('mssecat_attend');
+  }catch(e){}
+  showToast('초기화 완료! 재시작합니다...');
+  setTimeout(()=>location.reload(),1000);
+}
+
+// 출석 체크
+const ATTEND_KEY='mssecat_attend';
+function getAttendData(){
+  try{return JSON.parse(localStorage.getItem(ATTEND_KEY)||'[]');}catch(e){return [];}
+}
+function doAttend(){
+  const today=new Date();
+  const ymd=today.toISOString().slice(0,10); // 'YYYY-MM-DD'
+  let dates=getAttendData();
+  if(dates.includes(ymd)){showToast('오늘은 이미 출석했어요 🌟');return;}
+  dates.push(ymd);
+  localStorage.setItem(ATTEND_KEY,JSON.stringify(dates));
+  showToast('출석 완료! 🙌');
+  updateAttendUI();
+}
+function updateAttendUI(){
+  const today=new Date();
+  const yr=today.getFullYear(),mo=today.getMonth();
+  // 이번 달 일요일 목록
+  const sundays=[];
+  for(let d=1;d<=31;d++){
+    const dt=new Date(yr,mo,d);
+    if(dt.getMonth()!==mo) break;
+    if(dt.getDay()===0) sundays.push(dt.toISOString().slice(0,10));
+  }
+  const dates=getAttendData();
+  const dotsEl=document.getElementById('attend-dots');
+  const btnEl=document.getElementById('attend-btn');
+  const greetEl=document.getElementById('attend-greeting');
+  const nick=getNickname();
+  if(greetEl) greetEl.textContent=(nick?nick+'님, ':'')+' 안녕하세요! 🌱';
+  if(dotsEl){
+    dotsEl.innerHTML=sundays.map(s=>`<div style="width:12px;height:12px;border-radius:50%;background:${dates.includes(s)?'var(--green)':'#ddd'}"></div>`).join('');
+  }
+  const todayStr=today.toISOString().slice(0,10);
+  if(btnEl){
+    if(dates.includes(todayStr)){
+      btnEl.textContent='✅ 출석완료';
+      btnEl.style.background='#aaa';
+    } else {
+      btnEl.textContent='출석';
+      btnEl.style.background='';
+    }
+  }
 }
 
 // ===== TOAST =====
@@ -2535,6 +2605,7 @@ function adminAddEvent(){
 }
 
 function adminDeleteEvent(idx){
+  if(!confirm('이 일정을 삭제할까요?')) return;
   const arr = getAdminEventsArr();
   arr.splice(idx,1);
   saveAdminEventsArr(arr);
@@ -2543,47 +2614,35 @@ function adminDeleteEvent(idx){
 }
 
 function renderAdminPanel(){
-  if(!adminAuthed) return;
-  // 커스텀 일정
-  const custom = getAdminEventsArr();
-  const cEl = document.getElementById('admin-custom-list');
-  if(custom.length===0){
-    cEl.innerHTML='<div class="admin-empty">추가된 일정이 없어요</div>';
+  const customEl = document.getElementById('admin-custom-list');
+  const baseEl = document.getElementById('admin-base-list');
+  if(!customEl || !baseEl) return;
+
+  const arr = getAdminEventsArr();
+  if(arr.length === 0){
+    customEl.innerHTML = '<div style="color:#aaa;font-size:.88rem;padding:8px 0">추가된 일정이 없어요</div>';
   } else {
-    cEl.innerHTML = custom.map((e,i)=>`
+    customEl.innerHTML = arr.map((ev,i)=>`
       <div class="admin-ev-item">
-        <div class="admin-ev-info">
-          <div class="admin-ev-date">${e.date}</div>
-          <div class="admin-ev-title">${e.title}</div>
-          ${e.sub?`<div class="admin-ev-sub">${e.sub}</div>`:''}
+        <div style="flex:1">
+          <div style="font-size:.88rem;color:#888">${ev.date}</div>
+          <div style="font-weight:700">${ev.title}</div>
+          ${ev.sub?`<div style="font-size:.82rem;color:#888">${ev.sub}</div>`:''}
         </div>
-        <button class="admin-ev-del" onclick="adminDeleteEvent(${i})">삭제</button>
+        <button onclick="adminDeleteEvent(${i})" style="border:none;background:#ffebee;color:#c62828;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:.82rem">삭제</button>
       </div>`).join('');
   }
-  // 기본 일정
-  const bEl = document.getElementById('admin-base-list');
-  bEl.innerHTML = CAL_CHILD.map(e=>`
-    <div class="admin-ev-item">
-      <div class="admin-ev-info">
-        <div class="admin-ev-date">${e.date}</div>
-        <div class="admin-ev-title">${e.title}</div>
-        ${e.sub?`<div class="admin-ev-sub">${e.sub}</div>`:''}
+
+  baseEl.innerHTML = CAL_CHILD.map(ev=>`
+    <div class="admin-ev-item" style="opacity:.7">
+      <div style="flex:1">
+        <div style="font-size:.88rem;color:#888">${ev.date}</div>
+        <div style="font-weight:600">${ev.title}</div>
+        ${ev.sub?`<div style="font-size:.82rem;color:#888">${ev.sub}</div>`:''}
       </div>
+      <span style="font-size:.75rem;color:#aaa">기본</span>
     </div>`).join('');
 }
-
-// admin 화면 진입 시 인증 상태 확인 (go → _goInternal 래핑)
-function go(id){
-  if(id==='screen-admin' && !adminAuthed){
-    document.getElementById('admin-login-area').style.display='block';
-    document.getElementById('admin-panel-area').style.display='none';
-  }
-  if(id==='screen-admin' && adminAuthed){
-    renderAdminPanel();
-  }
-  _goInternal(id);
-}
-
 </script>
 </body>
 </html>
