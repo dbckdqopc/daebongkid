@@ -2263,6 +2263,24 @@ function changeNickname(){
   }
 }
 
+function saveNickname(){
+  var v = (document.getElementById('nick-input')||{}).value||'';
+  if(v.trim()){
+    setNickname(v.trim());
+  } else {
+    showToast('이름을 입력해주세요 🌱');
+    return;
+  }
+  var m = document.getElementById('nick-modal-bg');
+  if(m) m.classList.remove('show');
+  renderStats();
+  updateHomeStat();
+}
+function skipNickname(){
+  var m = document.getElementById('nick-modal-bg');
+  if(m) m.classList.remove('show');
+}
+
 // 초기화 모달
 function showResetModal(){
   const m=document.getElementById('reset-modal');
@@ -2584,6 +2602,12 @@ window.onload=function(){
   initFirebaseFB();
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').catch(()=>{});
+  }
+  // 첫 방문 시 닉네임 모달 표시
+  if(!getNickname()){
+    var m = document.getElementById('nick-modal-bg');
+    if(m) m.classList.add('show');
+    setTimeout(function(){ var inp=document.getElementById('nick-input'); if(inp) inp.focus(); }, 200);
   }
 };
 
