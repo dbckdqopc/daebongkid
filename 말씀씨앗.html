@@ -2894,6 +2894,9 @@ function initPhotoListener(retry){
   });
 }
 
+// 사진 모달용 전역 포토 인덱스
+window._photoFlat = [];
+
 function renderPhotoGallery(){
   var el = document.getElementById('pt-photo-gallery');
   if(!el) return;
@@ -2901,21 +2904,36 @@ function renderPhotoGallery(){
     el.innerHTML = '<div class="admin-empty" style="text-align:center;padding:40px 0">📸<br><br>아직 업로드된 사진이 없어요<br><span style="font-size:.8rem;color:#bbb">선생님이 예배 후 사진을 올려드려요</span></div>';
     return;
   }
+  // 전역 배열에 순서대로 저장 (onclick 인덱스 참조용)
+  window._photoFlat = [];
+  var globalIdx = 0;
   el.innerHTML = window._fbPhotos.map(function(album){
     var photos = album.photos || [];
     var thumbs = photos.slice(0,4).map(function(p){
-      return '<img src="' + p.url + '" onclick="openPhotoModal('' + p.url + '','' + (p.name||'photo') + '')"'
+      var idx = globalIdx++;
+      window._photoFlat.push({url: p.url, name: p.name || 'photo'});
+      return '<img src="' + p.url + '" onclick="openPhotoByIdx(' + idx + ')"'
         + ' style="width:calc(50% - 4px);aspect-ratio:1;object-fit:cover;border-radius:8px;cursor:pointer">';
     }).join('');
+    // 나머지 사진도 인덱스 등록 (4장 초과분)
+    photos.slice(4).forEach(function(p){
+      window._photoFlat.push({url: p.url, name: p.name || 'photo'});
+      globalIdx++;
+    });
     return '<div class="card" style="margin-bottom:12px">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
       + '<div><div style="font-weight:700;font-size:.95rem">' + album.title + '</div>'
       + '<div style="font-size:.78rem;color:#888">' + album.date + ' · ' + photos.length + '장</div></div>'
       + '</div>'
       + '<div style="display:flex;flex-wrap:wrap;gap:8px">' + thumbs + '</div>'
-      + (photos.length > 4 ? '<div style="font-size:.8rem;color:#888;text-align:center;margin-top:6px">+' + (photos.length-4) + '장 더 있어요 (터치해서 보기)</div>' : '')
+      + (photos.length > 4 ? '<div style="font-size:.8rem;color:#888;text-align:center;margin-top:6px">+' + (photos.length-4) + '장 더 있어요</div>' : '')
       + '</div>';
   }).join('');
+}
+
+function openPhotoByIdx(idx){
+  var p = (window._photoFlat || [])[idx];
+  if(p) openPhotoModal(p.url, p.name);
 }
 
 function openPhotoModal(url, name){
@@ -3011,11 +3029,16 @@ function renderAdminAlbumList(){
       + '<div class="admin-ev-date">' + a.date + '</div>'
       + '<div class="admin-ev-title">' + a.title + ' (' + (a.photos||[]).length + '장)</div>'
       + '</div>'
-      + '<button class="admin-ev-del" onclick="adminDeleteAlbum('' + a._fbKey + '')">삭제</button>'
+      + '<button class="admin-ev-del" onclick="adminDeleteAlbumByIdx(' + i + ')">삭제</button>'
       + '</div>';
   }).join('');
 }
 
+function adminDeleteAlbumByIdx(i){
+  var albums = window._fbPhotos || [];
+  var a = albums[i];
+  if(a) adminDeleteAlbum(a._fbKey);
+}
 function adminDeleteAlbum(key){
   if(!confirm('앨범을 삭제할까요?')) return;
   if(!window._fbDb) return;
@@ -3052,17 +3075,22 @@ function renderAdminNoticeList(){
     el.innerHTML = '<div class="admin-empty">게시된 알림이 없어요</div>';
     return;
   }
-  el.innerHTML = notices.map(function(n){
+  el.innerHTML = notices.map(function(n,ni){
     return '<div class="admin-ev-item">'
       + '<div class="admin-ev-info">'
       + '<div class="admin-ev-date">' + n.date + (n.important?' ⭐':'') + '</div>'
       + '<div class="admin-ev-title">' + n.title + '</div>'
       + '</div>'
-      + '<button class="admin-ev-del" onclick="adminDeleteNotice('' + n._fbKey + '')">삭제</button>'
+      + '<button class="admin-ev-del" onclick="adminDeleteNoticeByIdx(' + ni + ')">삭제</button>'
       + '</div>';
   }).join('');
 }
 
+function adminDeleteNoticeByIdx(i){
+  var notices = window._fbNotices || [];
+  var n = notices[i];
+  if(n) adminDeleteNotice(n._fbKey);
+}
 function adminDeleteNotice(key){
   if(!confirm('알림을 삭제할까요?')) return;
   if(!window._fbDb) return;
