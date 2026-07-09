@@ -14,7 +14,8 @@
 :root{--green:#4CAF50;--green2:#2e7d32;--blue:#1976D2;--orange:#F57C00;--purple:#7B1FA2;--red:#C62828;--bg:#f0f4f0;--card:#fff;--text:#1a1a1a;--sub:#555;--border:#e0e0e0;--radius:16px;--shadow:0 2px 12px rgba(0,0,0,.10);}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--bg);color:var(--text);max-width:430px;margin:0 auto;min-height:100vh;position:relative;overflow-x:hidden;}
-.screen{display:none;flex-direction:column;min-height:100vh;padding-bottom:72px;}
+.screen{display:none;flex-direction:column;min-height:100vh;padding-bottom:72px;contain:layout style;}
+.screen.active{display:flex;}
 .screen.active{display:flex;}
 .topbar{background:var(--green);color:#fff;padding:16px 18px 12px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10;}
 .topbar h1{font-size:1.1rem;font-weight:700;flex:1;}
@@ -1765,6 +1766,7 @@ console.log('Quizzes loaded:', Object.keys(QUIZZES).length);
 const STORAGE_KEY='malsseumssiaat_v1';
 
 function saveState(){
+  _homeStatDirty=true;
   try{
     const toSave={
       quizHistory:appState.quizHistory,
@@ -1796,14 +1798,16 @@ let memLesson=25;
 
 // ===== NAVIGATION =====
 const _screenStack=[];
+var _cachedScreens=null, _cachedNbEls={};
 function go(id,_push=true){
+  if(!_cachedScreens) _cachedScreens=document.querySelectorAll('.screen');
   const cur=document.querySelector('.screen.active')?.id;
   if(_push && cur && cur!==id) _screenStack.push(cur);
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  _cachedScreens.forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  ['home','curriculum','quiz','memory','calendar','settings'].forEach(k=>{
-    const el=document.getElementById('nb-'+k);
-    if(el) el.classList.remove('active');
+  ['home','curriculum','quiz','memory','calendar','settings','parents'].forEach(k=>{
+    if(!_cachedNbEls[k]) _cachedNbEls[k]=document.getElementById('nb-'+k);
+    if(_cachedNbEls[k]) _cachedNbEls[k].classList.remove('active');
   });
   const map={
     'screen-home':'nb-home','screen-curriculum':'nb-curriculum',
@@ -1832,7 +1836,11 @@ function goBack(){const prev=_screenStack.pop()||'screen-home';go(prev,false);}
 
 // ===== HOME =====
 let homeLesson=null;
+var _homeStatDirty=true;
+function markHomeStatDirty(){ _homeStatDirty=true; }
 function updateHomeStat(){
+  if(!_homeStatDirty) return;
+  _homeStatDirty=false;
   const h=appState.quizHistory;
   document.getElementById('stat-quiz').textContent=h.length;
   document.getElementById('stat-avg').textContent=h.length?Math.round(h.reduce((a,b)=>a+b.score,0)/h.length)+'점':'-';
@@ -2184,7 +2192,7 @@ function loadMemory(n, retry){
 
   document.getElementById('memory-body').innerHTML=`
     <div class="mem-card-img-wrap" style="text-align:center;margin-bottom:12px">
-      <img src="images/${n}과.jpg" alt="${n}과 말씀카드" style="max-width:100%;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.12)"
+      <img loading="lazy" src="images/${n}과.jpg" alt="${n}과 말씀카드" style="max-width:100%;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.12)"
         onerror="this.parentElement.style.display='none'">
     </div>
     <div class="section-title">🃏 플래시카드 — 탭해서 확인!</div>
@@ -2453,42 +2461,45 @@ function initFirebaseFB(){
     messagingSenderId:'758425200131',
     appId:'1:758425200131:web:f81b18d55f6472a5f55036'
   };
-  const s1=document.createElement('script');
+  // firebase-app-compat 먼저 로드 후, database+storage 병렬 로드
+  var s1=document.createElement('script');
   s1.src='https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js';
-  s1.onload=()=>{
-    const s2=document.createElement('script');
-    s2.src='https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js';
-    s2.onload=()=>{
+  s1.onload=function(){
+    var loaded=0;
+    function onSubLoaded(){
+      loaded++;
+      if(loaded<2) return; // database + storage 둘 다 로드 완료 대기
       try{
         if(!firebase.apps.length) firebase.initializeApp(cfg);
         window._fbDb=firebase.database();
-        // ── Firebase Storage 로드 ──
-        var s3=document.createElement('script');
-        s3.src='https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js';
-        s3.onload=function(){
-          try{ window._fbStorage=firebase.storage(); }catch(e){ console.warn('Storage 초기화 실패',e); }
-        };
-        document.head.appendChild(s3);
+        try{ window._fbStorage=firebase.storage(); }catch(e){ console.warn('Storage 초기화 실패',e); }
         // ── adminEvents 실시간 동기화 ──
-        window._fbAdminEvents = [];
-        window._fbDb.ref('adminEvents').on('value', function(snap){
-          var data = snap.val() || {};
-          window._fbAdminEvents = Object.keys(data).map(function(k){
-            return Object.assign({}, data[k], {_fbKey: k});
+        window._fbAdminEvents=[];
+        window._fbDb.ref('adminEvents').on('value',function(snap){
+          var data=snap.val()||{};
+          window._fbAdminEvents=Object.keys(data).map(function(k){
+            return Object.assign({},data[k],{_fbKey:k});
           }).sort(function(a,b){ return a.date.localeCompare(b.date); });
-          // localStorage에도 캐시 (오프라인 폴백)
-          try{ localStorage.setItem('ADMIN_CHILD_EVENTS', JSON.stringify(window._fbAdminEvents)); }catch(e){}
-          // 달력/관리자 패널 자동 갱신
+          try{ localStorage.setItem('ADMIN_CHILD_EVENTS',JSON.stringify(window._fbAdminEvents)); }catch(e){}
           try{
-            if(document.getElementById('screen-calendar') && document.getElementById('screen-calendar').classList.contains('active')) renderCal();
+            if(document.getElementById('screen-calendar').classList.contains('active')) renderCal();
           }catch(e){}
           try{
-            if(document.getElementById('screen-admin') && document.getElementById('screen-admin').classList.contains('active')) renderAdminPanel();
+            if(document.getElementById('screen-admin').classList.contains('active')) renderAdminPanel();
           }catch(e){}
         });
-      }catch(e){console.warn('Firebase 초기화 실패',e);}
-    };
+        // Firebase 준비 완료 후 즉시 리스너 등록 (2.5초 딜레이 제거)
+        initPhotoListener();
+      }catch(e){ console.warn('Firebase 초기화 실패',e); }
+    }
+    var s2=document.createElement('script');
+    s2.src='https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js';
+    s2.onload=onSubLoaded;
+    var s3=document.createElement('script');
+    s3.src='https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js';
+    s3.onload=onSubLoaded;
     document.head.appendChild(s2);
+    document.head.appendChild(s3);
   };
   document.head.appendChild(s1);
 }
@@ -2702,7 +2713,7 @@ window.onload=function(){
   loadState();
   updateHomeStat();
   initFirebaseFB();
-  setTimeout(initPhotoListener, 2500); // Firebase 초기화 후 리스너 등록
+  // initPhotoListener 는 Firebase 초기화 완료 후 자동 호출됨 (initFirebaseFB 내부)
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').catch(()=>{});
   }
@@ -2863,19 +2874,18 @@ function parentsTab(tab){
 function renderParentsScreen(){
   renderPhotoGallery();
   renderNoticeList();
-  renderAdminAlbumList();
-  renderAdminNoticeList();
+  if(adminAuthed){
+    renderAdminAlbumList();
+    renderAdminNoticeList();
+  }
 }
 
 // ── 사진 갤러리 ──
 window._fbPhotos = [];
 window._fbNotices = [];
 
-function initPhotoListener(retry){
-  if(!window._fbDb){
-    if((retry||0) < 10) setTimeout(function(){ initPhotoListener((retry||0)+1); }, 1000);
-    return;
-  }
+function initPhotoListener(){
+  if(!window._fbDb){ console.warn('initPhotoListener: _fbDb 없음'); return; }
   window._fbDb.ref('photoAlbums').orderByChild('date').on('value', function(snap){
     var data = snap.val() || {};
     window._fbPhotos = Object.keys(data).map(function(k){
