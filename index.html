@@ -2896,6 +2896,16 @@ function initPhotoListener(retry){
 
 // 사진 모달용 전역 포토 인덱스
 window._photoFlat = [];
+window._albumExpanded = {};
+
+function renderAlbumThumbs(photos, albumStartIdx, showAll){
+  var showCount = showAll ? photos.length : Math.min(4, photos.length);
+  return photos.slice(0, showCount).map(function(p, i){
+    var idx = albumStartIdx + i;
+    return '<img src="' + p.url + '" onclick="openPhotoByIdx(' + idx + ')"'
+      + ' style="width:calc(50% - 4px);aspect-ratio:1;object-fit:cover;border-radius:8px;cursor:pointer">';
+  }).join('');
+}
 
 function renderPhotoGallery(){
   var el = document.getElementById('pt-photo-gallery');
@@ -2904,31 +2914,44 @@ function renderPhotoGallery(){
     el.innerHTML = '<div class="admin-empty" style="text-align:center;padding:40px 0">📸<br><br>아직 업로드된 사진이 없어요<br><span style="font-size:.8rem;color:#bbb">선생님이 예배 후 사진을 올려드려요</span></div>';
     return;
   }
-  // 전역 배열에 순서대로 저장 (onclick 인덱스 참조용)
   window._photoFlat = [];
   var globalIdx = 0;
-  el.innerHTML = window._fbPhotos.map(function(album){
+  el.innerHTML = window._fbPhotos.map(function(album, ai){
     var photos = album.photos || [];
-    var thumbs = photos.slice(0,4).map(function(p){
-      var idx = globalIdx++;
-      window._photoFlat.push({url: p.url, name: p.name || 'photo'});
-      return '<img src="' + p.url + '" onclick="openPhotoByIdx(' + idx + ')"'
-        + ' style="width:calc(50% - 4px);aspect-ratio:1;object-fit:cover;border-radius:8px;cursor:pointer">';
-    }).join('');
-    // 나머지 사진도 인덱스 등록 (4장 초과분)
-    photos.slice(4).forEach(function(p){
+    var albumStart = globalIdx;
+    photos.forEach(function(p){
       window._photoFlat.push({url: p.url, name: p.name || 'photo'});
       globalIdx++;
     });
-    return '<div class="card" style="margin-bottom:12px">'
+    var expanded = !!window._albumExpanded[ai];
+    var thumbs = renderAlbumThumbs(photos, albumStart, expanded);
+    var moreBtn = '';
+    if(photos.length > 4){
+      if(!expanded){
+        moreBtn = '<button onclick="expandAlbum(' + ai + ')" style="width:100%;margin-top:8px;padding:9px;background:#f0faf5;border:1.5px solid #4caf50;border-radius:8px;color:#2e7d32;font-size:.85rem;font-weight:600;cursor:pointer">+' + (photos.length-4) + '장 더 보기 ▼</button>';
+      } else {
+        moreBtn = '<button onclick="collapseAlbum(' + ai + ')" style="width:100%;margin-top:8px;padding:9px;background:#f5f5f5;border:1.5px solid #bbb;border-radius:8px;color:#666;font-size:.85rem;font-weight:600;cursor:pointer">접기 ▲</button>';
+      }
+    }
+    return '<div class="card" style="margin-bottom:12px" id="album-card-' + ai + '">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
       + '<div><div style="font-weight:700;font-size:.95rem">' + album.title + '</div>'
       + '<div style="font-size:.78rem;color:#888">' + album.date + ' · ' + photos.length + '장</div></div>'
       + '</div>'
       + '<div style="display:flex;flex-wrap:wrap;gap:8px">' + thumbs + '</div>'
-      + (photos.length > 4 ? '<div style="font-size:.8rem;color:#888;text-align:center;margin-top:6px">+' + (photos.length-4) + '장 더 있어요</div>' : '')
+      + moreBtn
       + '</div>';
   }).join('');
+}
+
+function expandAlbum(ai){
+  window._albumExpanded[ai] = true;
+  renderPhotoGallery();
+}
+
+function collapseAlbum(ai){
+  window._albumExpanded[ai] = false;
+  renderPhotoGallery();
 }
 
 function openPhotoByIdx(idx){
