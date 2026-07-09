@@ -40,7 +40,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(
 .stat-box .lbl{font-size:.72rem;color:var(--sub);}
 /* bottom nav */
 .bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:#fff;border-top:1px solid var(--border);display:flex;z-index:20;}
-.nav-btn{flex:1;padding:10px 0 8px;border:none;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--sub);font-size:.7rem;}
+.nav-btn{flex:1;padding:6px 0 4px;border:none;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;color:var(--sub);font-size:.55rem;}
 .nav-btn.active{color:var(--green2);}
 .nav-btn .ni{font-size:1.35rem;}
 /* quiz */
@@ -471,6 +471,35 @@ textarea.reflect-input{width:100%;border:2px solid var(--border);border-radius:1
       <!-- 추가된 일정 목록 -->
       <div class="admin-section-title">추가된 아동2부 일정</div>
       <div id="admin-custom-list"></div>
+
+      <!-- ── 예배 사진 업로드 ── -->
+      <div class="admin-section-title" style="margin-top:20px">📸 예배 사진 업로드</div>
+      <div class="admin-add-form">
+        <div class="admin-field"><label>앨범 제목</label><input type="text" id="photo-album-title" placeholder="예) 7월 2주 주일예배" maxlength="30"></div>
+        <div class="admin-field"><label>날짜</label><input type="date" id="photo-date"></div>
+        <div class="admin-field">
+          <label>사진 선택 <span style="font-weight:400;color:#888">(여러 장 가능)</span></label>
+          <input type="file" id="photo-file-input" accept="image/*" multiple style="font-size:.85rem;padding:6px 0">
+        </div>
+        <button class="admin-save-btn" onclick="adminUploadPhotos()">📤 업로드</button>
+        <div id="photo-upload-progress" style="margin-top:8px;font-size:.82rem;color:var(--green2)"></div>
+      </div>
+      <div class="admin-section-title">업로드된 앨범</div>
+      <div id="admin-album-list"></div>
+
+      <!-- ── 알림장 작성 ── -->
+      <div class="admin-section-title" style="margin-top:20px">📣 알림장 작성</div>
+      <div class="admin-add-form">
+        <div class="admin-field"><label>제목</label><input type="text" id="notice-title" placeholder="예) 7월 행사 안내" maxlength="40"></div>
+        <div class="admin-field"><label>내용</label><textarea id="notice-content" placeholder="알림 내용을 입력하세요" rows="4" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #e0e0e0;font-size:.9rem;resize:vertical;box-sizing:border-box"></textarea></div>
+        <div class="admin-field" style="display:flex;align-items:center;gap:8px">
+          <input type="checkbox" id="notice-important" style="width:18px;height:18px">
+          <label for="notice-important" style="font-size:.88rem">⭐ 중요 공지</label>
+        </div>
+        <button class="admin-save-btn" onclick="adminPostNotice()">📣 알림 게시</button>
+      </div>
+      <div class="admin-section-title">게시된 알림장</div>
+      <div id="admin-notice-list"></div>
     </div>
   </div>
 </div>
@@ -485,6 +514,33 @@ textarea.reflect-input{width:100%;border:2px solid var(--border);border-radius:1
       <button class="modal-confirm" onclick="confirmReset()">네, 삭제합니다</button>
     </div>
   </div>
+</div>
+
+<!-- ===== 학부모 소통 SCREEN ===== -->
+<div id="screen-parents" class="screen">
+  <div class="topbar"><button class="back" onclick="go('screen-home')">←</button><h1>👨‍👩‍👧 학부모 소통</h1></div>
+  <div class="content" style="padding-top:12px">
+    <!-- 탭 -->
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button id="pt-tab-photo" class="btn btn-green" style="flex:1;font-size:.88rem" onclick="parentsTab('photo')">📸 예배 사진</button>
+      <button id="pt-tab-notice" class="btn btn-outline" style="flex:1;font-size:.88rem" onclick="parentsTab('notice')">📣 알림장</button>
+    </div>
+    <!-- 사진 탭 -->
+    <div id="pt-photo-section">
+      <div id="pt-photo-gallery"><div class="admin-empty">사진을 불러오는 중...</div></div>
+    </div>
+    <!-- 알림장 탭 -->
+    <div id="pt-notice-section" style="display:none">
+      <div id="pt-notice-list"><div class="admin-empty">알림을 불러오는 중...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 사진 전체보기 모달 -->
+<div id="photo-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9000;flex-direction:column;align-items:center;justify-content:center" onclick="if(event.target===this)closePhotoModal()">
+  <button onclick="closePhotoModal()" style="position:absolute;top:16px;right:16px;background:none;border:none;color:#fff;font-size:2rem;cursor:pointer">✕</button>
+  <img id="photo-modal-img" src="" style="max-width:95vw;max-height:80vh;border-radius:8px;object-fit:contain">
+  <a id="photo-modal-dl" href="" download style="margin-top:16px;background:#fff;color:#333;padding:10px 24px;border-radius:20px;font-size:.9rem;font-weight:700;text-decoration:none">⬇️ 다운로드</a>
 </div>
 
 <!-- ===== CALENDAR SCREEN ===== -->
@@ -519,6 +575,7 @@ textarea.reflect-input{width:100%;border:2px solid var(--border);border-radius:1
   <button class="nav-btn" id="nb-quiz" onclick="go('screen-quiz-select')"><span class="ni">✏️</span>퀴즈</button>
   <button class="nav-btn" id="nb-memory" onclick="goThisWeekMem()"><span class="ni">🔤</span>암송</button>
   <button class="nav-btn" id="nb-calendar" onclick="go('screen-calendar')"><span class="ni">📅</span>달력</button>
+  <button class="nav-btn" id="nb-parents" onclick="go('screen-parents')"><span class="ni">👨‍👩‍👧</span>소통</button>
   <button class="nav-btn" id="nb-settings" onclick="go('screen-settings')"><span class="ni">⚙️</span>설정</button>
 </nav>
 
@@ -1751,7 +1808,7 @@ function go(id,_push=true){
   const map={
     'screen-home':'nb-home','screen-curriculum':'nb-curriculum',
     'screen-quiz-select':'nb-quiz','screen-quiz':'nb-quiz',
-    'screen-memory':'nb-memory','screen-calendar':'nb-calendar','screen-settings':'nb-settings'
+    'screen-memory':'nb-memory','screen-calendar':'nb-calendar','screen-parents':'nb-parents','screen-settings':'nb-settings'
   };
   if(map[id]) document.getElementById(map[id])?.classList.add('active');
   if(id==='screen-curriculum') renderCurriculum();
@@ -1767,6 +1824,7 @@ function go(id,_push=true){
     }
   }
   if(id==='screen-quiz-select') renderQuizSelect();
+  if(id==='screen-parents') renderParentsScreen();
   if(id==='screen-calendar'){const t=new Date();calYear=t.getFullYear();calMonth=t.getMonth();renderCal();}
   updateHomeStat();
 }
@@ -2404,6 +2462,13 @@ function initFirebaseFB(){
       try{
         if(!firebase.apps.length) firebase.initializeApp(cfg);
         window._fbDb=firebase.database();
+        // ── Firebase Storage 로드 ──
+        var s3=document.createElement('script');
+        s3.src='https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js';
+        s3.onload=function(){
+          try{ window._fbStorage=firebase.storage(); }catch(e){ console.warn('Storage 초기화 실패',e); }
+        };
+        document.head.appendChild(s3);
         // ── adminEvents 실시간 동기화 ──
         window._fbAdminEvents = [];
         window._fbDb.ref('adminEvents').on('value', function(snap){
@@ -2637,6 +2702,7 @@ window.onload=function(){
   loadState();
   updateHomeStat();
   initFirebaseFB();
+  setTimeout(initPhotoListener, 2500); // Firebase 초기화 후 리스너 등록
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').catch(()=>{});
   }
@@ -2770,6 +2836,241 @@ function adminAddEvent(){
 
 
 
+
+// ===== 학부모 소통 =====
+var _parentsTab = 'photo';
+
+function parentsTab(tab){
+  _parentsTab = tab;
+  var ph = document.getElementById('pt-photo-section');
+  var no = document.getElementById('pt-notice-section');
+  var tb1 = document.getElementById('pt-tab-photo');
+  var tb2 = document.getElementById('pt-tab-notice');
+  if(tab==='photo'){
+    ph.style.display=''; no.style.display='none';
+    tb1.className='btn btn-green'; tb2.className='btn btn-outline';
+    tb1.style.flex='1'; tb1.style.fontSize='.88rem';
+    tb2.style.flex='1'; tb2.style.fontSize='.88rem';
+  } else {
+    ph.style.display='none'; no.style.display='';
+    tb1.className='btn btn-outline'; tb2.className='btn btn-green';
+    tb1.style.flex='1'; tb1.style.fontSize='.88rem';
+    tb2.style.flex='1'; tb2.style.fontSize='.88rem';
+    renderNoticeList();
+  }
+}
+
+function renderParentsScreen(){
+  renderPhotoGallery();
+  renderNoticeList();
+  renderAdminAlbumList();
+  renderAdminNoticeList();
+}
+
+// ── 사진 갤러리 ──
+window._fbPhotos = [];
+window._fbNotices = [];
+
+function initPhotoListener(retry){
+  if(!window._fbDb){
+    if((retry||0) < 10) setTimeout(function(){ initPhotoListener((retry||0)+1); }, 1000);
+    return;
+  }
+  window._fbDb.ref('photoAlbums').orderByChild('date').on('value', function(snap){
+    var data = snap.val() || {};
+    window._fbPhotos = Object.keys(data).map(function(k){
+      return Object.assign({}, data[k], {_fbKey: k});
+    }).sort(function(a,b){ return b.date.localeCompare(a.date); });
+    renderPhotoGallery();
+    renderAdminAlbumList();
+  });
+  window._fbDb.ref('notices').orderByChild('createdAt').on('value', function(snap){
+    var data = snap.val() || {};
+    window._fbNotices = Object.keys(data).map(function(k){
+      return Object.assign({}, data[k], {_fbKey: k});
+    }).sort(function(a,b){ return b.createdAt - a.createdAt; });
+    renderNoticeList();
+    renderAdminNoticeList();
+  });
+}
+
+function renderPhotoGallery(){
+  var el = document.getElementById('pt-photo-gallery');
+  if(!el) return;
+  if(!window._fbPhotos || window._fbPhotos.length===0){
+    el.innerHTML = '<div class="admin-empty" style="text-align:center;padding:40px 0">📸<br><br>아직 업로드된 사진이 없어요<br><span style="font-size:.8rem;color:#bbb">선생님이 예배 후 사진을 올려드려요</span></div>';
+    return;
+  }
+  el.innerHTML = window._fbPhotos.map(function(album){
+    var photos = album.photos || [];
+    var thumbs = photos.slice(0,4).map(function(p){
+      return '<img src="' + p.url + '" onclick="openPhotoModal('' + p.url + '','' + (p.name||'photo') + '')"'
+        + ' style="width:calc(50% - 4px);aspect-ratio:1;object-fit:cover;border-radius:8px;cursor:pointer">';
+    }).join('');
+    return '<div class="card" style="margin-bottom:12px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
+      + '<div><div style="font-weight:700;font-size:.95rem">' + album.title + '</div>'
+      + '<div style="font-size:.78rem;color:#888">' + album.date + ' · ' + photos.length + '장</div></div>'
+      + '</div>'
+      + '<div style="display:flex;flex-wrap:wrap;gap:8px">' + thumbs + '</div>'
+      + (photos.length > 4 ? '<div style="font-size:.8rem;color:#888;text-align:center;margin-top:6px">+' + (photos.length-4) + '장 더 있어요 (터치해서 보기)</div>' : '')
+      + '</div>';
+  }).join('');
+}
+
+function openPhotoModal(url, name){
+  var m = document.getElementById('photo-modal');
+  var img = document.getElementById('photo-modal-img');
+  var dl = document.getElementById('photo-modal-dl');
+  if(!m) return;
+  m.style.display='flex';
+  img.src = url;
+  dl.href = url;
+  dl.download = name;
+}
+
+function closePhotoModal(){
+  var m = document.getElementById('photo-modal');
+  if(m) m.style.display='none';
+}
+
+// ── 알림장 뷰 ──
+function renderNoticeList(){
+  var el = document.getElementById('pt-notice-list');
+  if(!el) return;
+  if(!window._fbNotices || window._fbNotices.length===0){
+    el.innerHTML = '<div class="admin-empty" style="text-align:center;padding:40px 0">📣<br><br>아직 등록된 알림이 없어요</div>';
+    return;
+  }
+  el.innerHTML = window._fbNotices.map(function(n){
+    var imp = n.important ? '<span style="background:#ffeb3b;color:#333;border-radius:6px;padding:1px 7px;font-size:.75rem;font-weight:700;margin-left:6px">⭐ 중요</span>' : '';
+    return '<div class="card" style="margin-bottom:10px;border-left:3px solid ' + (n.important?'#f57c00':'var(--green2)') + '">'
+      + '<div style="display:flex;align-items:center;margin-bottom:6px">'
+      + '<span style="font-weight:700;font-size:.95rem">' + n.title + '</span>' + imp + '</div>'
+      + '<div style="font-size:.85rem;line-height:1.7;color:#444;white-space:pre-wrap">' + n.content + '</div>'
+      + '<div style="font-size:.75rem;color:#bbb;margin-top:8px">' + (n.date||'') + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+// ── 관리자: 사진 업로드 ──
+function adminUploadPhotos(){
+  var title = (document.getElementById('photo-album-title')||{}).value||'';
+  var date  = (document.getElementById('photo-date')||{}).value||'';
+  var files = (document.getElementById('photo-file-input')||{}).files||[];
+  var prog  = document.getElementById('photo-upload-progress');
+  if(!title.trim()){ showToast('앨범 제목을 입력해주세요'); return; }
+  if(!date){ showToast('날짜를 선택해주세요'); return; }
+  if(!files.length){ showToast('사진을 선택해주세요'); return; }
+  if(!window._fbStorage || !window._fbDb){ showToast('Firebase 연결 중입니다. 잠시 후 시도해주세요'); return; }
+
+  if(prog) prog.textContent = '업로드 중... (0/' + files.length + ')';
+  var uploads = [];
+  for(var i=0; i<files.length; i++){
+    uploads.push(uploadOnePhoto(files[i], title, date, i, files.length, prog));
+  }
+  Promise.all(uploads).then(function(photoArr){
+    var albumRef = window._fbDb.ref('photoAlbums').push();
+    return albumRef.set({date:date, title:title, photos:photoArr, createdAt:Date.now()});
+  }).then(function(){
+    if(prog) prog.textContent = '✅ 업로드 완료!';
+    document.getElementById('photo-album-title').value='';
+    document.getElementById('photo-date').value='';
+    document.getElementById('photo-file-input').value='';
+    showToast('사진 업로드 완료! 📸');
+  }).catch(function(e){
+    if(prog) prog.textContent = '❌ 실패: ' + e.message;
+    showToast('업로드 실패: ' + e.message);
+  });
+}
+
+function uploadOnePhoto(file, title, date, idx, total, prog){
+  return new Promise(function(resolve, reject){
+    var safeName = date + '_' + idx + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+    var ref = window._fbStorage.ref('photos/' + date + '/' + safeName);
+    ref.put(file).then(function(snap){
+      return snap.ref.getDownloadURL();
+    }).then(function(url){
+      if(prog) prog.textContent = '업로드 중... (' + (idx+1) + '/' + total + ')';
+      resolve({url:url, name:file.name, storagePath:'photos/'+date+'/'+safeName});
+    }).catch(reject);
+  });
+}
+
+function renderAdminAlbumList(){
+  var el = document.getElementById('admin-album-list');
+  if(!el) return;
+  var albums = window._fbPhotos || [];
+  if(!albums.length){
+    el.innerHTML = '<div class="admin-empty">업로드된 앨범이 없어요</div>';
+    return;
+  }
+  el.innerHTML = albums.map(function(a,i){
+    return '<div class="admin-ev-item">'
+      + '<div class="admin-ev-info">'
+      + '<div class="admin-ev-date">' + a.date + '</div>'
+      + '<div class="admin-ev-title">' + a.title + ' (' + (a.photos||[]).length + '장)</div>'
+      + '</div>'
+      + '<button class="admin-ev-del" onclick="adminDeleteAlbum('' + a._fbKey + '')">삭제</button>'
+      + '</div>';
+  }).join('');
+}
+
+function adminDeleteAlbum(key){
+  if(!confirm('앨범을 삭제할까요?')) return;
+  if(!window._fbDb) return;
+  window._fbDb.ref('photoAlbums/' + key).remove()
+    .then(function(){ showToast('앨범 삭제됨 🗑️'); })
+    .catch(function(e){ showToast('삭제 실패: ' + e.message); });
+}
+
+// ── 관리자: 알림장 ──
+function adminPostNotice(){
+  var title   = (document.getElementById('notice-title')||{}).value||'';
+  var content = (document.getElementById('notice-content')||{}).value||'';
+  var imp     = (document.getElementById('notice-important')||{}).checked||false;
+  if(!title.trim()){ showToast('제목을 입력해주세요'); return; }
+  if(!content.trim()){ showToast('내용을 입력해주세요'); return; }
+  if(!window._fbDb){ showToast('Firebase 연결 중입니다'); return; }
+  var today = new Date().toLocaleDateString('ko-KR');
+  window._fbDb.ref('notices').push({
+    title:title.trim(), content:content.trim(),
+    important:imp, date:today, createdAt:Date.now()
+  }).then(function(){
+    document.getElementById('notice-title').value='';
+    document.getElementById('notice-content').value='';
+    document.getElementById('notice-important').checked=false;
+    showToast('알림 게시 완료! 📣');
+  }).catch(function(e){ showToast('게시 실패: ' + e.message); });
+}
+
+function renderAdminNoticeList(){
+  var el = document.getElementById('admin-notice-list');
+  if(!el) return;
+  var notices = window._fbNotices || [];
+  if(!notices.length){
+    el.innerHTML = '<div class="admin-empty">게시된 알림이 없어요</div>';
+    return;
+  }
+  el.innerHTML = notices.map(function(n){
+    return '<div class="admin-ev-item">'
+      + '<div class="admin-ev-info">'
+      + '<div class="admin-ev-date">' + n.date + (n.important?' ⭐':'') + '</div>'
+      + '<div class="admin-ev-title">' + n.title + '</div>'
+      + '</div>'
+      + '<button class="admin-ev-del" onclick="adminDeleteNotice('' + n._fbKey + '')">삭제</button>'
+      + '</div>';
+  }).join('');
+}
+
+function adminDeleteNotice(key){
+  if(!confirm('알림을 삭제할까요?')) return;
+  if(!window._fbDb) return;
+  window._fbDb.ref('notices/' + key).remove()
+    .then(function(){ showToast('알림 삭제됨 🗑️'); })
+    .catch(function(e){ showToast('삭제 실패: ' + e.message); });
+}
+
 function adminDeleteEvent(idx){
   if(!confirm('이 일정을 삭제할까요?')) return;
   var evs = getAdminEvents();
@@ -2794,6 +3095,8 @@ function renderAdminPanel(){
   var customEl = document.getElementById('admin-custom-list');
   if(!customEl) return;
   admCalRender();
+  renderAdminAlbumList();
+  renderAdminNoticeList();
   var arr = getAdminEventsArr();
   if(arr.length === 0){
     customEl.innerHTML = '<div class="admin-empty">아직 추가된 일정이 없어요<br><span style="font-size:.8rem;color:#aaa">위에서 날짜와 행사명을 입력해 추가하세요</span></div>';
