@@ -11,9 +11,10 @@
 <link rel="manifest" href="manifest.json">
 <title>말씀씨앗 🌱</title>
 <style>
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/[email protected]/dist/web/static/pretendard.css');
 :root{--green:#4CAF50;--green2:#2e7d32;--blue:#1976D2;--orange:#F57C00;--purple:#7B1FA2;--red:#C62828;--bg:#f0f4f0;--card:#fff;--text:#1a1a1a;--sub:#555;--border:#e0e0e0;--radius:16px;--shadow:0 2px 12px rgba(0,0,0,.10);}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--bg);color:var(--text);max-width:430px;margin:0 auto;min-height:100vh;position:relative;overflow-x:hidden;}
+body{font-family:'Pretendard','Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--bg);color:var(--text);max-width:430px;margin:0 auto;min-height:100vh;position:relative;overflow-x:hidden;}
 .screen{display:none;flex-direction:column;min-height:100vh;padding-bottom:72px;contain:layout style;}
 .screen.active{display:flex;}
 .screen.active{display:flex;}
@@ -379,7 +380,8 @@ textarea.reflect-input{width:100%;border:2px solid var(--border);border-radius:1
       </div>
       <div style="height:8px"></div>
     </div>
-    <button class="btn btn-green" style="margin-top:10px" onclick="go('screen-quiz-select')">다른 과 퀴즈 풀기</button>
+    <button class="btn btn-green" style="margin-top:10px" onclick="loadMemory(currentLesson);go('screen-memory')">🔤 이어서 암송 훈련하기</button>
+    <button class="btn btn-outline" style="margin-top:10px" onclick="go('screen-quiz-select')">다른 과 퀴즈 풀기</button>
   </div>
 </div>
 
