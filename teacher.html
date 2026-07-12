@@ -104,6 +104,13 @@ tr:hover td{background:#f9fbe7;}
   </div>
 
   <div class="card">
+    <h2>👥 회원 현황 (활성/비활성)</h2>
+    <div id="user-activity-wrap">
+      <p style="color:#555;font-size:.9rem">데이터를 불러오는 중...</p>
+    </div>
+  </div>
+
+  <div class="card">
     <h2>🏆 학생별 퀴즈 기록</h2>
     <div class="filter-row">
       <select id="filter-lesson" onchange="renderTable()">
@@ -229,9 +236,13 @@ async function loadData(){
     // attendance
     const aSnap = await db.ref('attendance').once('value');
     const attendData = aSnap.val()||{};
+    // 회원 현황 (활성/비활성)
+    const uaSnap = await db.ref('userActivity').once('value');
+    const userActivity = uaSnap.val()||{};
     renderSummary(allData, attendData);
     renderTable();
     renderAttendance(attendData);
+    renderUserActivity(userActivity);
     populateFilters();
   }catch(e){
     document.getElementById('table-wrap').innerHTML='<p style="color:#c62828">오류: '+e.message+'</p>';
@@ -335,6 +346,35 @@ function renderAttendance(attendData){
           `<td style="text-align:center">${weeks.includes(wk)?'✅':'-'}</td>`).join('')}</tr>`;
       }).join('')}</tbody>
     </table>`;
+}
+
+function renderUserActivity(userActivity){
+  const wrap = document.getElementById('user-activity-wrap');
+  if(!wrap) return;
+  const nicks = Object.keys(userActivity);
+  if(nicks.length===0){
+    wrap.innerHTML = '<p style="color:#555;font-size:.9rem">아직 접속 기록이 없어요. (이 기능 업데이트 이후 접속한 사용자부터 기록됩니다)</p>';
+    return;
+  }
+  const now = Date.now();
+  const WEEK_MS = 7*24*60*60*1000;
+  const rows = nicks.map(nick=>{
+    const d = userActivity[nick]||{};
+    const firstStr = d.first ? new Date(d.first).toLocaleDateString('ko-KR') : '-';
+    const lastStr = d.lastDateStr || (d.last ? new Date(d.last).toLocaleDateString('ko-KR') : '-');
+    const active = !!(d.last && (now - d.last) <= WEEK_MS);
+    return {nick, firstStr, lastStr, lastTs:d.last||0, active};
+  }).sort((a,b)=>b.lastTs-a.lastTs);
+  const activeCount = rows.filter(r=>r.active).length;
+  wrap.innerHTML = '<p style="color:#555;font-size:.85rem;margin-bottom:10px">총 ' + rows.length + '명 중 <strong style="color:#2e7d32">' + activeCount + '명 활성</strong> (최근 7일 이내 접속 기준)</p>'
+    + '<table><thead><tr><th>별명</th><th>최초 접속</th><th>마지막 접속</th><th>상태</th></tr></thead><tbody>'
+    + rows.map(r=>{
+        const badge = r.active
+          ? '<span class="score-badge s-100">🟢 활성</span>'
+          : '<span class="score-badge s-low">⚪ 비활성</span>';
+        return '<tr><td><strong>'+r.nick+'</strong></td><td>'+r.firstStr+'</td><td>'+r.lastStr+'</td><td>'+badge+'</td></tr>';
+      }).join('')
+    + '</tbody></table>';
 }
 
 function getWeekKey(date){
