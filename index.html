@@ -495,11 +495,16 @@ textarea.reflect-input{width:100%;border:2px solid var(--border);border-radius:1
       <div class="admin-add-form">
         <div class="admin-field"><label>제목</label><input type="text" id="notice-title" placeholder="예) 7월 행사 안내" maxlength="40"></div>
         <div class="admin-field"><label>내용</label><textarea id="notice-content" placeholder="알림 내용을 입력하세요" rows="4" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #e0e0e0;font-size:.9rem;resize:vertical;box-sizing:border-box"></textarea></div>
+        <div class="admin-field">
+          <label>사진 첨부 <span style="font-weight:400;color:#888">(선택, 여러 장 가능)</span></label>
+          <input type="file" id="notice-photo-input" accept="image/*" multiple style="font-size:.85rem;padding:6px 0">
+        </div>
         <div class="admin-field" style="display:flex;align-items:center;gap:8px">
           <input type="checkbox" id="notice-important" style="width:18px;height:18px">
           <label for="notice-important" style="font-size:.88rem">⭐ 중요 공지</label>
         </div>
         <button class="admin-save-btn" onclick="adminPostNotice()">📣 알림 게시</button>
+        <div id="notice-upload-progress" style="margin-top:8px;font-size:.82rem;color:var(--green2)"></div>
       </div>
       <div class="admin-section-title">게시된 알림장</div>
       <div id="admin-notice-list"></div>
@@ -2318,6 +2323,7 @@ function setNickname(nick){
     localStorage.setItem(NICK_KEY,nick.trim());
     showToast('닉네임이 저장됐어요 🌱');
     renderStats();
+    pushUserActivity(nick.trim());
   }
 }
 
@@ -2401,6 +2407,7 @@ function doAttend(){
   localStorage.setItem(ATTEND_KEY,JSON.stringify(dates));
   showToast('출석 완료! 🙌');
   updateAttendUI();
+  pushAttendanceToFB(getNickname());
 }
 function updateAttendUI(){
   const today=new Date();
@@ -2452,6 +2459,36 @@ function showToast(msg,dur=2200){
 function pushResultToFB(nick,lesson,score,date){
   if(!nick||!window._fbDb) return;
   window._fbDb.ref('quizResults/'+nick+'/'+Date.now()).set({lesson,score,date}).catch(()=>{});
+}
+
+// 회원 현황(활성/비활성) 기록 — 앱을 열거나 닉네임을 저장할 때마다 호출
+function pushUserActivity(nick, retry){
+  if(!nick) return;
+  if(!window._fbDb){
+    if(!retry||retry<15) setTimeout(function(){pushUserActivity(nick,(retry||0)+1);},1000);
+    return;
+  }
+  const now=Date.now();
+  const ref=window._fbDb.ref('userActivity/'+nick);
+  ref.child('first').transaction(function(cur){ return cur===null ? now : cur; });
+  ref.child('last').set(now);
+  ref.child('lastDateStr').set(new Date().toLocaleDateString('ko-KR'));
+}
+
+// 출석 체크를 교사 대시보드에서도 볼 수 있도록 Firebase에 동기화
+function getWeekKeyLocal(date){
+  const d=new Date(date);const day=d.getDay();const sun=new Date(d);
+  sun.setDate(d.getDate()-day);return sun.toISOString().slice(0,10);
+}
+function pushAttendanceToFB(nick){
+  if(!nick||!window._fbDb) return;
+  const wk=getWeekKeyLocal(new Date());
+  const ref=window._fbDb.ref('attendance/'+nick);
+  ref.once('value').then(function(snap){
+    let arr=snap.val();
+    if(!Array.isArray(arr)) arr=[];
+    if(arr.indexOf(wk)===-1){ arr.push(wk); ref.set(arr); }
+  }).catch(()=>{});
 }
 function initFirebaseFB(){
   const cfg={
@@ -2716,6 +2753,7 @@ window.onload=function(){
   updateHomeStat();
   initFirebaseFB();
   // initPhotoListener 는 Firebase 초기화 완료 후 자동 호출됨 (initFirebaseFB 내부)
+  pushUserActivity(getNickname());
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').catch(()=>{});
   }
@@ -2997,10 +3035,17 @@ function renderNoticeList(){
   }
   el.innerHTML = window._fbNotices.map(function(n){
     var imp = n.important ? '<span style="background:#ffeb3b;color:#333;border-radius:6px;padding:1px 7px;font-size:.75rem;font-weight:700;margin-left:6px">⭐ 중요</span>' : '';
+    var photos = n.photos || [];
+    var photosHTML = photos.length ? ('<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">' + photos.map(function(p){
+      var safeUrl = (p.url||'').replace(/'/g,'%27');
+      var safeName = (p.name||'photo').replace(/'/g,'');
+      return '<img src="' + p.url + '" onclick="openPhotoModal(\'' + safeUrl + '\',\'' + safeName + '\')" style="width:calc(33.333% - 4px);aspect-ratio:1;object-fit:cover;border-radius:8px;cursor:pointer">';
+    }).join('') + '</div>') : '';
     return '<div class="card" style="margin-bottom:10px;border-left:3px solid ' + (n.important?'#f57c00':'var(--green2)') + '">'
       + '<div style="display:flex;align-items:center;margin-bottom:6px">'
       + '<span style="font-weight:700;font-size:.95rem">' + n.title + '</span>' + imp + '</div>'
       + '<div style="font-size:.85rem;line-height:1.7;color:#444;white-space:pre-wrap">' + n.content + '</div>'
+      + photosHTML
       + '<div style="font-size:.75rem;color:#bbb;margin-top:8px">' + (n.date||'') + '</div>'
       + '</div>';
   }).join('');
@@ -3087,19 +3132,55 @@ function adminPostNotice(){
   var title   = (document.getElementById('notice-title')||{}).value||'';
   var content = (document.getElementById('notice-content')||{}).value||'';
   var imp     = (document.getElementById('notice-important')||{}).checked||false;
+  var files   = (document.getElementById('notice-photo-input')||{}).files||[];
+  var prog    = document.getElementById('notice-upload-progress');
   if(!title.trim()){ showToast('제목을 입력해주세요'); return; }
   if(!content.trim()){ showToast('내용을 입력해주세요'); return; }
   if(!window._fbDb){ showToast('Firebase 연결 중입니다'); return; }
   var today = new Date().toLocaleDateString('ko-KR');
-  window._fbDb.ref('notices').push({
-    title:title.trim(), content:content.trim(),
-    important:imp, date:today, createdAt:Date.now()
-  }).then(function(){
-    document.getElementById('notice-title').value='';
-    document.getElementById('notice-content').value='';
-    document.getElementById('notice-important').checked=false;
-    showToast('알림 게시 완료! 📣');
-  }).catch(function(e){ showToast('게시 실패: ' + e.message); });
+
+  function postWithPhotos(photoArr){
+    window._fbDb.ref('notices').push({
+      title:title.trim(), content:content.trim(),
+      important:imp, date:today, createdAt:Date.now(),
+      photos: photoArr||[]
+    }).then(function(){
+      document.getElementById('notice-title').value='';
+      document.getElementById('notice-content').value='';
+      document.getElementById('notice-important').checked=false;
+      document.getElementById('notice-photo-input').value='';
+      if(prog) prog.textContent='';
+      showToast('알림 게시 완료! 📣');
+    }).catch(function(e){ showToast('게시 실패: ' + e.message); });
+  }
+
+  if(files.length){
+    if(!window._fbStorage){ showToast('사진 저장소 연결 중입니다. 잠시 후 다시 시도해주세요'); return; }
+    if(prog) prog.textContent = '사진 업로드 중... (0/' + files.length + ')';
+    var uploads = [];
+    for(var i=0; i<files.length; i++){
+      uploads.push(uploadNoticePhoto(files[i], i, files.length, prog));
+    }
+    Promise.all(uploads).then(postWithPhotos).catch(function(e){
+      if(prog) prog.textContent = '❌ 사진 업로드 실패: ' + e.message;
+      showToast('사진 업로드 실패: ' + e.message);
+    });
+  } else {
+    postWithPhotos([]);
+  }
+}
+
+function uploadNoticePhoto(file, idx, total, prog){
+  return new Promise(function(resolve, reject){
+    var safeName = Date.now() + '_' + idx + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+    var ref = window._fbStorage.ref('notices/' + safeName);
+    ref.put(file).then(function(snap){
+      return snap.ref.getDownloadURL();
+    }).then(function(url){
+      if(prog) prog.textContent = '사진 업로드 중... (' + (idx+1) + '/' + total + ')';
+      resolve({url:url, name:file.name});
+    }).catch(reject);
+  });
 }
 
 function renderAdminNoticeList(){
@@ -3111,10 +3192,11 @@ function renderAdminNoticeList(){
     return;
   }
   el.innerHTML = notices.map(function(n,ni){
+    var photoTag = (n.photos && n.photos.length) ? ' <span style="color:#888;font-size:.78rem">📷' + n.photos.length + '</span>' : '';
     return '<div class="admin-ev-item">'
       + '<div class="admin-ev-info">'
       + '<div class="admin-ev-date">' + n.date + (n.important?' ⭐':'') + '</div>'
-      + '<div class="admin-ev-title">' + n.title + '</div>'
+      + '<div class="admin-ev-title">' + n.title + photoTag + '</div>'
       + '</div>'
       + '<button class="admin-ev-del" onclick="adminDeleteNoticeByIdx(' + ni + ')">삭제</button>'
       + '</div>';
