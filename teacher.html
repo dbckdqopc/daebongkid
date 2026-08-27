@@ -104,6 +104,14 @@ tr:hover td{background:#f9fbe7;}
   </div>
 
   <div class="card">
+    <h2>🌱 연말 시상 — 종합 성장 포인트</h2>
+    <p style="font-size:.8rem;color:#888;margin-bottom:10px">출석 1회 10점 · 퀴즈 1회 응시 시 5점+정답률 보너스(최대 10점) · 암송 1과 완료 15점을 합산한 순위입니다.</p>
+    <div id="growth-wrap">
+      <p style="color:#555;font-size:.9rem">데이터를 불러오는 중...</p>
+    </div>
+  </div>
+
+  <div class="card">
     <h2>👥 회원 현황 (활성/비활성)</h2>
     <div id="user-activity-wrap">
       <p style="color:#555;font-size:.9rem">데이터를 불러오는 중...</p>
@@ -236,6 +244,9 @@ async function loadData(){
     // attendance
     const aSnap = await db.ref('attendance').once('value');
     const attendData = aSnap.val()||{};
+    // 암송 완료
+    const mSnap = await db.ref('memComplete').once('value');
+    const memData = mSnap.val()||{};
     // 회원 현황 (활성/비활성)
     const uaSnap = await db.ref('userActivity').once('value');
     const userActivity = uaSnap.val()||{};
@@ -243,6 +254,7 @@ async function loadData(){
     renderTable();
     renderAttendance(attendData);
     renderUserActivity(userActivity);
+    renderGrowth(allData, attendData, memData);
     populateFilters();
   }catch(e){
     document.getElementById('table-wrap').innerHTML='<p style="color:#c62828">오류: '+e.message+'</p>';
@@ -375,6 +387,56 @@ function renderUserActivity(userActivity){
         return '<tr><td><strong>'+r.nick+'</strong></td><td>'+r.firstStr+'</td><td>'+r.lastStr+'</td><td>'+badge+'</td></tr>';
       }).join('')
     + '</tbody></table>';
+}
+
+const GROWTH_TIERS=[
+  {min:0,   emoji:'🌱',name:'씨앗'},
+  {min:100, emoji:'🌿',name:'새싹'},
+  {min:250, emoji:'🌳',name:'나무'},
+  {min:450, emoji:'🍇',name:'열매'}
+];
+function growthTierOf(total){
+  let tier=GROWTH_TIERS[0];
+  for(const t of GROWTH_TIERS){ if(total>=t.min) tier=t; }
+  return tier;
+}
+function renderGrowth(quizRows, attendData, memData){
+  const wrap = document.getElementById('growth-wrap');
+  if(!wrap) return;
+  const nicks = new Set([
+    ...Object.keys(attendData||{}),
+    ...Object.keys(memData||{}),
+    ...quizRows.map(r=>r.nick)
+  ]);
+  if(nicks.size===0){
+    wrap.innerHTML = '<p style="color:#555;font-size:.9rem">아직 활동 기록이 없어요.</p>';
+    return;
+  }
+  const rows = [...nicks].map(nick=>{
+    const attendCnt = Array.isArray(attendData[nick]) ? attendData[nick].length : 0;
+    const memCnt = Array.isArray(memData[nick]) ? memData[nick].length : 0;
+    const myQuiz = quizRows.filter(r=>r.nick===nick);
+    const quizCnt = myQuiz.length;
+    const quizPoints = myQuiz.reduce((s,r)=>s+5+Math.round((r.score||0)/10),0);
+    const attendPoints = attendCnt*10;
+    const memPoints = memCnt*15;
+    const total = attendPoints+quizPoints+memPoints;
+    return {nick, attendCnt, quizCnt, memCnt, total, tier:growthTierOf(total)};
+  }).sort((a,b)=>b.total-a.total);
+  const medals=['🥇','🥈','🥉'];
+  wrap.innerHTML = `<table>
+    <thead><tr><th>순위</th><th>이름</th><th>단계</th><th>총점</th><th>출석</th><th>퀴즈</th><th>암송</th></tr></thead>
+    <tbody>${rows.map((r,i)=>`
+      <tr><td style="text-align:center">${medals[i]||i+1}</td>
+        <td><strong>${r.nick}</strong></td>
+        <td>${r.tier.emoji} ${r.tier.name}</td>
+        <td><span class="score-badge s-100">${r.total}점</span></td>
+        <td style="text-align:center">${r.attendCnt}회</td>
+        <td style="text-align:center">${r.quizCnt}회</td>
+        <td style="text-align:center">${r.memCnt}과</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
 }
 
 function getWeekKey(date){
