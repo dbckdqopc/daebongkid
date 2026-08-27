@@ -303,6 +303,13 @@ textarea.reflect-input{width:100%;border:2px solid var(--border);border-radius:1
       <div class="stat-box"><div class="num" id="stat-avg">-</div><div class="lbl">평균 점수</div></div>
       <div class="stat-box"><div class="num" id="stat-bm">0</div><div class="lbl">북마크</div></div>
     </div>
+    <div class="card" id="growth-card" onclick="go('screen-growth')" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:.8rem;color:var(--sub);font-weight:700">나의 성장</div>
+        <div style="font-size:1.15rem;font-weight:800;color:var(--green2)" id="growth-badge-line">🌱 씨앗 · 0점</div>
+      </div>
+      <div style="font-size:1.8rem" id="growth-emoji">🌱</div>
+    </div>
     <button class="btn btn-green" id="home-lesson-btn" onclick="goThisWeek()">📖 이번 주 말씀 보기</button>
     <div style="height:10px"></div>
     <button class="btn btn-outline" onclick="go('screen-quiz-select')">✏️ 퀴즈 풀기</button>
@@ -394,6 +401,12 @@ textarea.reflect-input{width:100%;border:2px solid var(--border);border-radius:1
   <div class="content" id="ranking-body"></div>
 </div>
 
+<!-- GROWTH (나의 성장) -->
+<div id="screen-growth" class="screen">
+  <div class="topbar"><button class="back" onclick="go('screen-home')">←</button><h1>🌱 나의 성장</h1></div>
+  <div class="content" id="growth-body"></div>
+</div>
+
 <!-- BOOKMARKS -->
 <div id="screen-bookmarks" class="screen">
   <div class="topbar"><h1>🔖 북마크</h1></div>
@@ -423,6 +436,8 @@ textarea.reflect-input{width:100%;border:2px solid var(--border);border-radius:1
       <div class="setting-row"><span class="sr-label">교회</span><span class="sr-val">대구대봉교회 아동2부</span></div>
     </div>
     <button class="btn btn-outline" style="margin-top:6px" onclick="go('screen-ranking')">🏆 퀴즈 기록 보기</button>
+<div style="height:10px"></div>
+    <button class="btn btn-outline" onclick="go('screen-growth')">🌱 나의 성장 보기</button>
 <div style="height:10px"></div>
 <button class="btn btn-outline" onclick="go('screen-admin')">📅 관리자 일정 편집</button>
     <button class="btn btn-outline" style="margin-top:6px" onclick="go('screen-bookmarks')">🔖 북마크 보기</button>
@@ -1835,6 +1850,7 @@ function go(id,_push=true){
   if(id==='screen-curriculum') renderCurriculum();
   if(id==='screen-bookmarks') renderBookmarks();
   if(id==='screen-ranking') renderRanking();
+  if(id==='screen-growth') renderGrowth();
   if(id==='screen-settings') renderStats();
   if(id==='screen-admin'){
     if(!adminAuthed){
@@ -1876,9 +1892,71 @@ function updateHomeStat(){
     if(memVerseEl) memVerseEl.textContent=L.verse||'';
   }
   updateAttendUI();
+  updateGrowthCard();
 }
 function goThisWeek(){if(homeLesson){loadLesson(homeLesson);go('screen-lesson');}}
 function goThisWeekMem(){if(homeLesson){loadMemory(homeLesson);go('screen-memory');}}
+
+// ===== GROWTH (나의 성장 — 출석·퀴즈·암송 종합 포인트) =====
+const GROWTH_TIERS=[
+  {min:0,   emoji:'🌱',name:'씨앗'},
+  {min:100, emoji:'🌿',name:'새싹'},
+  {min:250, emoji:'🌳',name:'나무'},
+  {min:450, emoji:'🍇',name:'열매'}
+];
+function calcGrowth(){
+  const attendCnt=getAttendData().length;
+  const attendPoints=attendCnt*10;
+  const qh=appState.quizHistory;
+  const quizCnt=qh.length;
+  const quizPoints=qh.reduce((s,h)=>s+5+Math.round((h.score||0)/10),0);
+  const memCnt=appState.memDone.size;
+  const memPoints=memCnt*15;
+  const total=attendPoints+quizPoints+memPoints;
+  let tier=GROWTH_TIERS[0];
+  for(const t of GROWTH_TIERS){ if(total>=t.min) tier=t; }
+  const idx=GROWTH_TIERS.indexOf(tier);
+  const next=GROWTH_TIERS[idx+1]||null;
+  return {attendCnt,attendPoints,quizCnt,quizPoints,memCnt,memPoints,total,tier,next};
+}
+function updateGrowthCard(){
+  const lineEl=document.getElementById('growth-badge-line');
+  const emojiEl=document.getElementById('growth-emoji');
+  if(!lineEl||!emojiEl) return;
+  const g=calcGrowth();
+  lineEl.textContent=g.tier.emoji+' '+g.tier.name+' · '+g.total+'점';
+  emojiEl.textContent=g.tier.emoji;
+}
+function renderGrowth(){
+  const el=document.getElementById('growth-body');
+  if(!el) return;
+  const g=calcGrowth();
+  const nextInfo=g.next
+    ? `<div style="font-size:.85rem;color:#555;margin-top:6px">다음 단계 <b>${g.next.emoji} ${g.next.name}</b>까지 <b style="color:var(--green2)">${g.next.min-g.total}점</b> 남았어요!</div>`
+    : `<div style="font-size:.85rem;color:#555;margin-top:6px">🎉 가장 높은 단계에 도달했어요! 정말 대단해요!</div>`;
+  const pct=g.next ? Math.max(4,Math.min(100,Math.round((g.total-g.tier.min)/(g.next.min-g.tier.min)*100))) : 100;
+  el.innerHTML=`
+    <div class="card" style="text-align:center">
+      <div style="font-size:3.2rem">${g.tier.emoji}</div>
+      <div style="font-size:1.3rem;font-weight:800;color:var(--green2);margin:4px 0">${g.tier.name}</div>
+      <div style="font-size:.9rem;color:#555">누적 성장 포인트 <b>${g.total}점</b></div>
+      <div style="background:#eee;border-radius:8px;height:10px;margin-top:12px;overflow:hidden">
+        <div style="background:var(--green2);height:100%;width:${pct}%;border-radius:8px;transition:width .3s"></div>
+      </div>
+      ${nextInfo}
+    </div>
+    <div class="card">
+      <h3>📋 활동 내역</h3>
+      <div class="setting-row"><span class="sr-label">🙋 출석</span><span class="sr-val">${g.attendCnt}회 · ${g.attendPoints}점</span></div>
+      <div class="setting-row"><span class="sr-label">✏️ 퀴즈</span><span class="sr-val">${g.quizCnt}회 · ${g.quizPoints}점</span></div>
+      <div class="setting-row"><span class="sr-label">🔤 암송</span><span class="sr-val">${g.memCnt}과 · ${g.memPoints}점</span></div>
+    </div>
+    <div class="card">
+      <h3>🏅 성장 단계 안내</h3>
+      ${GROWTH_TIERS.map(t=>`<div class="setting-row"><span class="sr-label">${t.emoji} ${t.name}</span><span class="sr-val">${t.min}점 이상</span></div>`).join('')}
+      <div style="font-size:.78rem;color:#999;margin-top:8px">출석 1회 10점 · 퀴즈 1회 응시 시 5점+정답률 보너스(최대 10점) · 암송 1과 완료 15점</div>
+    </div>`;
+}
 
 // ===== CURRICULUM =====
 function renderCurriculum(){
@@ -2286,6 +2364,7 @@ function confirmMem(){
   if(ok){
     appState.memDone.add(memLesson);
     saveState();
+    pushMemToFB(getNickname(),memLesson);
     loadMemory(memLesson);
   }else{
     const fb=document.getElementById('mem-feedback');
@@ -2491,6 +2570,16 @@ function pushAttendanceToFB(nick){
     let arr=snap.val();
     if(!Array.isArray(arr)) arr=[];
     if(arr.indexOf(wk)===-1){ arr.push(wk); ref.set(arr); }
+  }).catch(()=>{});
+}
+// 암송 완료를 교사 대시보드에서도 볼 수 있도록 Firebase에 동기화
+function pushMemToFB(nick,lesson){
+  if(!nick||!window._fbDb) return;
+  const ref=window._fbDb.ref('memComplete/'+nick);
+  ref.once('value').then(function(snap){
+    let arr=snap.val();
+    if(!Array.isArray(arr)) arr=[];
+    if(arr.indexOf(lesson)===-1){ arr.push(lesson); ref.set(arr); }
   }).catch(()=>{});
 }
 function initFirebaseFB(){
