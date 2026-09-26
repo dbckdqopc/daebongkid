@@ -3363,15 +3363,16 @@ function renderAlbumThumbs(photos, albumStartIdx, showAll){
 }
 
 function renderPhotoGallery(){
+  var _albums = _visibleAlbums();
   var el = document.getElementById('pt-photo-gallery');
   if(!el) return;
-  if(!window._fbPhotos || window._fbPhotos.length===0){
+  if(!_albums || _albums.length===0){
     el.innerHTML = '<div class="admin-empty" style="text-align:center;padding:40px 0">📸<br><br>아직 업로드된 사진이 없어요<br><span style="font-size:.8rem;color:#bbb">선생님이 예배 후 사진을 올려드려요</span></div>';
     return;
   }
   window._photoFlat = [];
   var globalIdx = 0;
-  el.innerHTML = window._fbPhotos.map(function(album, ai){
+  el.innerHTML = _albums.map(function(album, ai){
     var photos = album.photos || [];
     var albumStart = globalIdx;
     photos.forEach(function(p){
@@ -3524,12 +3525,44 @@ function adminDeleteAlbumByIdx(i){
   var a = albums[i];
   if(a) adminDeleteAlbum(a._fbKey);
 }
-function adminDeleteAlbum(key){
-  if(!confirm('앨범을 삭제할까요?')) return;
+function adminDeleteAlbum(key){ /* PATCH:album-cleanup v1 */
+  var albums = window._fbPhotos || [];
+  var album = null;
+  for(var i=0;i<albums.length;i++){ if(albums[i]._fbKey===key){ album=albums[i]; break; } }
+  var photos = (album && album.photos) || [];
+  if(!confirm('앨범과 사진 ' + photos.length + '장을 완전히 삭제할까요?\n(삭제 후에는 되돌릴 수 없습니다)')) return;
   if(!window._fbDb) return;
-  window._fbDb.ref('photoAlbums/' + key).remove()
-    .then(function(){ showToast('앨범 삭제됨 🗑️'); })
-    .catch(function(e){ showToast('삭제 실패: ' + e.message); });
+  if(!window._fbStorage){ showToast('사진 저장소 연결 중입니다. 잠시 후 다시 시도해주세요'); return; }
+  showToast('사진 삭제 중... (' + photos.length + '장)');
+  var jobs = photos.map(function(p){
+    var ref;
+    try{
+      ref = p.storagePath ? window._fbStorage.ref(p.storagePath) : window._fbStorage.refFromURL(p.url);
+    }catch(e){ return Promise.resolve({ok:false, err:e}); }
+    return ref.delete().then(function(){ return {ok:true}; }).catch(function(e){
+      // 이미 지워진 파일은 성공으로 간주
+      if(e && e.code==='storage/object-not-found') return {ok:true};
+      return {ok:false, err:e};
+    });
+  });
+  Promise.all(jobs).then(function(results){
+    var failed = results.filter(function(r){ return !r.ok; });
+    if(failed.length){
+      console.warn('사진 삭제 실패', failed);
+      showToast('사진 ' + failed.length + '장 삭제 실패 — 앨범은 남겨둡니다. 다시 시도해주세요');
+      return;
+    }
+    return window._fbDb.ref('photoAlbums/' + key).remove().then(function(){
+      showToast('앨범과 사진 삭제 완료 🗑️');
+    });
+  }).catch(function(e){ showToast('삭제 실패: ' + e.message); });
+}
+
+// 학부모 화면에는 최근 30일 이내 앨범만 표시
+function _visibleAlbums(){
+  var cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 30);
+  var c = cutoff.getFullYear() + '-' + ('0'+(cutoff.getMonth()+1)).slice(-2) + '-' + ('0'+cutoff.getDate()).slice(-2);
+  return (window._fbPhotos || []).filter(function(a){ return (a.date||'') >= c; });
 }
 
 // ── 관리자: 알림장 ──
