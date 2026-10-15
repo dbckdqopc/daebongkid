@@ -2,293 +2,168 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
-<meta name="theme-color" content="#f7f4ec">
-<meta name="robots" content="noindex,nofollow">
-<title>말씀씨앗 관리자 보드</title>
-<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>말씀씨앗 교사 대시보드</title>
 <style>
-/* 말씀씨앗 관리자 보드 · Design System v2 (학생 앱과 동일 토큰) */
-:root{
-  --green:#3f9460;--green2:#1f6b43;--green-deep:#154d31;--green-soft:#e4f2e8;
-  --sun:#f4a636;--sun-soft:#fff2d9;--sky:#3b82c4;--sky-soft:#e3effa;
-  --berry:#c8402f;--berry-soft:#fdeceb;
-  --bg:#f7f4ec;--card:#fff;--card-2:#f1eee3;--text:#1d2a22;--sub:#5d6a62;--border:#e7e2d3;
-  --radius:20px;--radius-sm:14px;
-  --shadow:0 1px 2px rgba(29,42,34,.05),0 8px 24px -12px rgba(29,42,34,.16);
-  --ease:cubic-bezier(.22,.8,.3,1);
-}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-html{background:var(--bg);-webkit-text-size-adjust:100%;}
-body{font-family:'Pretendard Variable','Pretendard','Noto Sans KR','Apple SD Gothic Neo',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;letter-spacing:-.01em;word-break:keep-all;overflow-wrap:break-word;-webkit-font-smoothing:antialiased;min-height:100vh;min-height:100dvh;}
-button,input,select,textarea{font-family:inherit;letter-spacing:inherit;}
-:focus-visible{outline:3px solid rgba(63,148,96,.55);outline-offset:2px;border-radius:8px;}
-.hidden{display:none!important;}
-
-/* ===== 로그인 ===== */
-#login-wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;
-  background:radial-gradient(120% 120% at 100% 0%,#5db97f 0%,rgba(93,185,127,0) 50%),linear-gradient(150deg,var(--green-deep),var(--green2));}
-.login-card{background:#fff;border-radius:28px;padding:34px 26px 26px;width:100%;max-width:360px;text-align:center;box-shadow:0 24px 60px -12px rgba(0,0,0,.45);animation:rise .35s var(--ease);}
-.login-logo{width:72px;height:72px;margin:0 auto 14px;border-radius:50%;background:var(--green-soft);display:flex;align-items:center;justify-content:center;font-size:2.4rem;}
-.login-card h1{font-size:1.3rem;font-weight:800;color:var(--green-deep);}
-.login-card p{font-size:.86rem;color:var(--sub);margin:4px 0 20px;}
-.login-card input{width:100%;padding:14px 16px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--bg);font-size:1rem;text-align:center;outline:none;margin-bottom:12px;transition:.2s;}
-.login-card input:focus{border-color:var(--green);background:#fff;box-shadow:0 0 0 4px rgba(63,148,96,.15);}
-.login-card button{width:100%;min-height:52px;border:none;border-radius:var(--radius-sm);background:linear-gradient(180deg,#46a066,var(--green2));color:#fff;font-size:1rem;font-weight:800;cursor:pointer;box-shadow:0 6px 16px -6px rgba(31,107,67,.55);}
-.err{color:var(--berry);font-size:.85rem;min-height:22px;margin-top:10px;font-weight:600;}
-@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-
-/* ===== 상단 헤더 ===== */
-.shell{max-width:1120px;margin:0 auto;padding:0 16px 48px;}
-.header{position:sticky;top:0;z-index:20;margin:0 -16px;padding:12px 16px 10px;background:rgba(247,244,236,.88);-webkit-backdrop-filter:saturate(1.4) blur(14px);backdrop-filter:saturate(1.4) blur(14px);}
-.header-row{display:flex;align-items:center;gap:12px;}
-.brand{display:flex;align-items:center;gap:10px;flex:1;min-width:0;}
-.brand-mark{width:42px;height:42px;border-radius:14px;background:linear-gradient(145deg,var(--green-deep),var(--green));display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;box-shadow:0 6px 14px -6px rgba(21,77,49,.6);}
-.brand h1{font-size:1.15rem;font-weight:800;color:var(--green-deep);letter-spacing:-.02em;line-height:1.25;}
-.brand .sub{font-size:.76rem;color:var(--sub);font-weight:500;}
-.hbtn{min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--border);background:var(--card);color:var(--green2);font-size:.84rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:transform .15s var(--ease),background .15s;white-space:nowrap;}
-.hbtn:active{transform:scale(.95);}
-.hbtn:hover{background:var(--green-soft);}
-.hbtn.primary{background:var(--green2);color:#fff;border-color:var(--green2);}
-.hbtn.primary:hover{background:var(--green-deep);}
-.hbtn.spin .ico{animation:spin .8s linear infinite;}
-@keyframes spin{to{transform:rotate(360deg)}}
-.updated{font-size:.72rem;color:var(--sub);text-align:right;line-height:1.3;}
-
-/* ===== 탭 ===== */
-.tabs{display:flex;gap:6px;overflow-x:auto;padding:12px 0 4px;scrollbar-width:none;}
-.tabs::-webkit-scrollbar{display:none;}
-.tab{flex-shrink:0;min-height:40px;padding:0 16px;border-radius:999px;border:1px solid var(--border);background:var(--card);color:var(--sub);font-size:.88rem;font-weight:700;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;gap:6px;}
-.tab .cnt{background:var(--card-2);color:var(--sub);border-radius:999px;padding:0 7px;font-size:.72rem;line-height:1.6;font-variant-numeric:tabular-nums;}
-.tab.active{background:var(--green2);border-color:var(--green2);color:#fff;box-shadow:0 6px 14px -6px rgba(31,107,67,.6);}
-.tab.active .cnt{background:rgba(255,255,255,.22);color:#fff;}
-.tab .cnt.alert{background:var(--berry);color:#fff;}
-
-/* ===== 카드 · KPI ===== */
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:14px 0;}
-.kpi{background:var(--card);border-radius:var(--radius);padding:16px 16px 14px;box-shadow:var(--shadow);border:1px solid rgba(231,226,211,.7);position:relative;overflow:hidden;}
-.kpi .lbl{font-size:.76rem;color:var(--sub);font-weight:700;}
-.kpi .num{font-size:1.9rem;font-weight:800;color:var(--green2);line-height:1.2;margin-top:2px;font-variant-numeric:tabular-nums;letter-spacing:-.03em;}
-.kpi .num small{font-size:.9rem;font-weight:700;color:var(--sub);margin-left:2px;letter-spacing:0;}
-.kpi .hint{font-size:.72rem;color:var(--sub);margin-top:2px;}
-.kpi.sun .num{color:#b45f06;}
-.kpi.sky .num{color:var(--sky);}
-.kpi::after{content:"";position:absolute;right:-18px;top:-18px;width:62px;height:62px;border-radius:50%;background:var(--green-soft);opacity:.7;}
-.kpi.sun::after{background:var(--sun-soft);}
-.kpi.sky::after{background:var(--sky-soft);}
-.card{background:var(--card);border-radius:var(--radius);padding:18px;margin-bottom:14px;box-shadow:var(--shadow);border:1px solid rgba(231,226,211,.7);}
-.card-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
-.card-head h2{font-size:1rem;font-weight:800;color:var(--green2);flex:1;min-width:140px;letter-spacing:-.02em;}
-.note{font-size:.8rem;color:var(--sub);line-height:1.6;margin-bottom:12px;}
-.grid2{display:grid;grid-template-columns:1fr;gap:14px;}
-@media(min-width:860px){.grid2{grid-template-columns:1fr 1fr;}}
-.empty{text-align:center;color:var(--sub);font-size:.9rem;padding:26px 10px;background:var(--bg);border-radius:var(--radius-sm);}
-
-/* ===== 할 일(조치 필요) ===== */
-.todo{display:flex;flex-direction:column;gap:8px;}
-.todo-item{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-radius:var(--radius-sm);background:var(--bg);}
-.todo-item .ti{font-size:1.3rem;line-height:1.3;}
-.todo-item .tt{font-size:.9rem;font-weight:800;}
-.todo-item .td{font-size:.8rem;color:var(--sub);margin-top:2px;line-height:1.55;}
-.todo-item.warn{background:var(--sun-soft);}
-.todo-item.ok{background:var(--green-soft);}
-.chip{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.76rem;font-weight:700;background:var(--card);border:1px solid var(--border);margin:2px 3px 2px 0;}
-
-/* ===== 표 ===== */
-.tbl-wrap{overflow-x:auto;margin:0 -4px;padding:0 4px;}
-table{width:100%;border-collapse:collapse;font-size:.88rem;min-width:420px;}
-th{position:sticky;top:0;background:var(--card-2);color:var(--green2);padding:10px 10px;text-align:left;font-weight:800;font-size:.78rem;white-space:nowrap;}
-th:first-child{border-radius:10px 0 0 10px;}th:last-child{border-radius:0 10px 10px 0;}
-td{padding:11px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+:root{--green:#4CAF50;--green2:#2e7d32;--blue:#1976D2;--orange:#F57C00;--red:#C62828;--bg:#f0f4f0;--card:#fff;--text:#1a1a1a;--sub:#555;--border:#e0e0e0;--radius:14px;--shadow:0 2px 12px rgba(0,0,0,.10);}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--bg);color:var(--text);max-width:900px;margin:0 auto;padding:16px;}
+h1{color:#fff;font-size:1.3rem;}
+.topbar{background:var(--green2);color:#fff;border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;}
+.topbar .sub{font-size:.82rem;opacity:.8;margin-top:2px;}
+.card{background:var(--card);border-radius:var(--radius);padding:18px;margin-bottom:16px;box-shadow:var(--shadow);}
+.card h2{font-size:1rem;font-weight:700;color:var(--green2);margin-bottom:12px;}
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.stat-box{background:var(--card);border-radius:12px;padding:16px;text-align:center;box-shadow:var(--shadow);}
+.stat-box .num{font-size:1.8rem;font-weight:800;color:var(--green2);}
+.stat-box .lbl{font-size:.75rem;color:var(--sub);margin-top:4px;}
+table{width:100%;border-collapse:collapse;font-size:.88rem;}
+th{background:#e8f5e9;color:var(--green2);padding:10px 8px;text-align:left;font-weight:700;}
+td{padding:9px 8px;border-bottom:1px solid var(--border);}
 tr:last-child td{border-bottom:none;}
-tbody tr:hover td{background:#faf8f1;}
-td.c,th.c{text-align:center;}
-td.num,td.date{font-variant-numeric:tabular-nums;}
-td.date{color:var(--sub);font-size:.82rem;white-space:nowrap;}
-.badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.76rem;font-weight:800;white-space:nowrap;}
-.s-100{background:var(--green-soft);color:#14532d;}
-.s-80{background:#efe6f7;color:#6a1b9a;}
-.s-60{background:var(--sun-soft);color:#a24c04;}
-.s-low{background:var(--berry-soft);color:var(--berry);}
-.s-off{background:var(--card-2);color:var(--sub);}
-.bar{height:8px;border-radius:999px;background:var(--card-2);overflow:hidden;min-width:70px;}
-.bar>i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--green),var(--sun));}
-.dots{display:flex;gap:6px;justify-content:center;}
-.dots i{width:14px;height:14px;border-radius:50%;background:var(--border);display:block;}
-.dots i.on{background:var(--green);}
-.dots i.now{outline:2px solid var(--sun);outline-offset:1px;}
-
-table.stick td:first-child,table.stick th:first-child{position:sticky;left:0;background:var(--card);z-index:1;box-shadow:6px 0 8px -8px rgba(29,42,34,.25);}
-table.stick th:first-child{background:var(--card-2);}
-/* ===== 필터 ===== */
-.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
-.filters select,.filters input{min-height:40px;padding:0 12px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);font-size:.88rem;outline:none;color:var(--text);}
-.filters input{flex:1;min-width:140px;}
-.filters select:focus,.filters input:focus{border-color:var(--green);background:#fff;}
-.sec-sub{font-size:.88rem;font-weight:800;color:var(--green2);margin:18px 0 8px;}
-.sec-sub:first-child{margin-top:0;}
-
-.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(10px);background:rgba(29,42,34,.94);color:#fff;padding:11px 20px;border-radius:999px;font-size:.86rem;font-weight:600;opacity:0;pointer-events:none;transition:.3s var(--ease);z-index:50;}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-.panel{animation:rise .3s var(--ease);}
-@media (max-width:520px){
-  .updated{display:none;}
-  .hbtn .t{display:none;}
-  .hbtn{padding:0 12px;}
-  .kpi .num{font-size:1.6rem;}
-}
-@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
+tr:hover td{background:#f9fbe7;}
+.score-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.78rem;font-weight:700;}
+.s-100{background:#e8f5e9;color:#1b5e20;}
+.s-80{background:#f3e5f5;color:#6a1b9a;}
+.s-60{background:#fff3e0;color:#e65100;}
+.s-low{background:#ffebee;color:#c62828;}
+/* login */
+#login-wrap{position:fixed;inset:0;background:linear-gradient(160deg,#1b5e20,#4CAF50);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;}
+#login-wrap h1{color:#fff;font-size:1.6rem;font-weight:800;}
+#login-wrap p{color:rgba(255,255,255,.8);font-size:.88rem;}
+#login-wrap input,#login-wrap select{width:280px;padding:13px 16px;border-radius:10px;border:none;font-size:1rem;text-align:center;outline:none;}
+#login-wrap button{width:280px;padding:13px;border-radius:10px;border:none;background:#fff;color:var(--green2);font-size:1rem;font-weight:800;cursor:pointer;}
+.err{color:#ffcdd2;font-size:.85rem;min-height:20px;}
+/* firebase config */
+#config-wrap{position:fixed;inset:0;background:#1b5e20;display:none;flex-direction:column;align-items:center;justify-content:flex-start;padding:30px 20px;overflow-y:auto;}
+#config-wrap h2{color:#fff;margin-bottom:8px;}
+#config-wrap p{color:rgba(255,255,255,.8);font-size:.85rem;margin-bottom:16px;text-align:center;line-height:1.6;}
+#config-wrap textarea{width:100%;max-width:500px;height:200px;padding:12px;border-radius:10px;border:none;font-size:.82rem;font-family:monospace;}
+#config-wrap button{margin-top:12px;width:100%;max-width:500px;padding:13px;border-radius:10px;border:none;background:#fff;color:var(--green2);font-size:1rem;font-weight:800;cursor:pointer;}
+#config-wrap a{color:#a5d6a7;font-size:.82rem;margin-top:8px;}
+.tag{display:inline-block;padding:2px 8px;border-radius:8px;font-size:.75rem;font-weight:600;background:#e8f5e9;color:var(--green2);margin-right:4px;}
+.btn-refresh{padding:7px 14px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;}
+.filter-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;}
+.filter-row select{padding:6px 10px;border-radius:8px;border:1px solid var(--border);font-size:.85rem;}
 </style>
 </head>
 <body>
 
-<!-- ===== 로그인 ===== -->
+<!-- Firebase Config Setup -->
+<div id="config-wrap">
+  <h2>🔧 Firebase 연결 설정</h2>
+  <p>처음 한 번만 설정하면 됩니다.<br>
+  아래 단계에 따라 Firebase 설정 코드를 붙여넣으세요.</p>
+  <p style="background:rgba(255,255,255,.15);border-radius:8px;padding:12px;font-size:.82rem;line-height:1.8;text-align:left;width:100%;max-width:500px">
+    ① <strong style="color:#fff">console.firebase.google.com</strong> 접속<br>
+    ② 프로젝트 만들기 → 이름 입력 (예: malsseumssiaat)<br>
+    ③ 프로젝트 설정(⚙️) → 일반 → 앱 추가(&lt;/&gt;웹)<br>
+    ④ 앱 등록 후 나오는 <strong style="color:#fff">firebaseConfig</strong> 객체 복사<br>
+    ⑤ 아래에 붙여넣기 후 저장
+  </p>
+  <textarea id="config-input" placeholder='{
+  "apiKey": "...",
+  "authDomain": "...",
+  "databaseURL": "https://...firebaseio.com",
+  "projectId": "...",
+  "storageBucket": "...",
+  "messagingSenderId": "...",
+  "appId": "..."
+}'></textarea>
+  <div class="err" id="config-err"></div>
+  <button onclick="saveConfig()">저장하고 시작하기</button>
+  <a href="#" onclick="skipConfig()">나중에 설정하기 (오프라인 모드)</a>
+</div>
+
+<!-- Login -->
 <div id="login-wrap">
-  <div class="login-card">
-    <div class="login-logo">🌱</div>
-    <h1>말씀씨앗 관리자 보드</h1>
-    <p>대구대봉교회 아동2부</p>
-    <input type="password" id="t-pw-input" placeholder="관리자 비밀번호" autocomplete="current-password"
-      onkeydown="if(event.key==='Enter')adminLogin()">
-    <button onclick="adminLogin()">로그인</button>
-    <div class="err" id="t-pw-err"></div>
-  </div>
+  <div style="font-size:3rem">📋</div>
+  <h1>교사 대시보드</h1>
+  <p>대구대봉교회 아동2부</p>
+  <input type="password" id="t-pw-input" placeholder="교사 비밀번호"
+    onkeydown="if(event.key==='Enter')teacherLogin()">
+  <button onclick="teacherLogin()">로그인</button>
+  <div class="err" id="t-pw-err"></div>
 </div>
 
-<!-- ===== 보드 ===== -->
-<div id="board" class="shell hidden">
-  <div class="header">
-    <div class="header-row">
-      <div class="brand">
-        <div class="brand-mark">🌱</div>
-        <div>
-          <h1>말씀씨앗 관리자 보드</h1>
-          <div class="sub">대구대봉교회 아동2부</div>
-        </div>
-      </div>
-      <div class="updated" id="updated">—</div>
-      <button class="hbtn primary" id="refresh-btn" onclick="loadData()" aria-label="새로고침"><span class="ico">↻</span><span class="t">새로고침</span></button>
-      <button class="hbtn" onclick="adminLogout()" aria-label="로그아웃"><span class="ico">⎋</span><span class="t">로그아웃</span></button>
+<!-- Dashboard -->
+<div id="dashboard" style="display:none">
+  <div class="topbar">
+    <div>
+      <h1>📋 교사 대시보드</h1>
+      <div class="sub">대구대봉교회 아동2부 · 말씀씨앗</div>
     </div>
-    <div class="tabs" role="tablist" id="tabs">
-      <button class="tab active" data-tab="overview" onclick="showTab('overview')">📊 한눈에</button>
-      <button class="tab" data-tab="growth" onclick="showTab('growth')">🏅 성장·시상</button>
-      <button class="tab" data-tab="quiz" onclick="showTab('quiz')">✏️ 퀴즈 기록</button>
-      <button class="tab" data-tab="attend" onclick="showTab('attend')">🙋 출석</button>
-      <button class="tab" data-tab="users" onclick="showTab('users')">👥 회원<span class="cnt hidden" id="users-cnt"></span></button>
+    <button class="btn-refresh" onclick="loadData()">새로고침</button>
+  </div>
+
+  <div class="stat-row" id="summary-stats">
+    <div class="stat-box"><div class="num" id="s-students">-</div><div class="lbl">참여 학생</div></div>
+    <div class="stat-box"><div class="num" id="s-quizzes">-</div><div class="lbl">총 퀴즈 완료</div></div>
+    <div class="stat-box"><div class="num" id="s-avg">-</div><div class="lbl">전체 평균점수</div></div>
+    <div class="stat-box"><div class="num" id="s-attend">-</div><div class="lbl">이번 주 출석</div></div>
+  </div>
+
+  <div class="card">
+    <h2>🌱 연말 시상 — 종합 성장 포인트</h2>
+    <p style="font-size:.8rem;color:#888;margin-bottom:10px">출석 1회 10점 · 퀴즈 1회 응시 시 5점+정답률 보너스(최대 10점) · 암송 1과 완료 15점을 합산한 순위입니다.</p>
+    <div id="growth-wrap">
+      <p style="color:#555;font-size:.9rem">데이터를 불러오는 중...</p>
     </div>
   </div>
 
-  <!-- 한눈에 -->
-  <section id="panel-overview" class="panel">
-    <div class="kpis">
-      <div class="kpi"><div class="lbl">참여 학생</div><div class="num" id="k-students">-</div><div class="hint" id="k-students-h">퀴즈·출석·암송 기록 기준</div></div>
-      <div class="kpi sun"><div class="lbl">이번 주 출석</div><div class="num" id="k-attend">-</div><div class="hint" id="k-attend-h"></div></div>
-      <div class="kpi sky"><div class="lbl">활성 회원</div><div class="num" id="k-active">-</div><div class="hint">최근 7일 이내 접속</div></div>
-      <div class="kpi"><div class="lbl">퀴즈 완료</div><div class="num" id="k-quizzes">-</div><div class="hint" id="k-avg-h"></div></div>
-      <div class="kpi sun"><div class="lbl">암송 이수</div><div class="num" id="k-mem">-</div><div class="hint">누적 과 수</div></div>
+  <div class="card">
+    <h2>👥 회원 현황 (활성/비활성)</h2>
+    <div id="user-activity-wrap">
+      <p style="color:#555;font-size:.9rem">데이터를 불러오는 중...</p>
     </div>
-    <div class="grid2">
-      <div class="card">
-        <div class="card-head"><h2>🔔 챙겨볼 일</h2></div>
-        <div id="todo-wrap"><div class="empty">데이터를 불러오는 중...</div></div>
-      </div>
-      <div class="card">
-        <div class="card-head"><h2>🏅 성장 순위 TOP 5</h2><button class="hbtn" onclick="showTab('growth')">전체 보기</button></div>
-        <div id="top-wrap"><div class="empty">데이터를 불러오는 중...</div></div>
-      </div>
-    </div>
-  </section>
+  </div>
 
-  <!-- 성장·시상 -->
-  <section id="panel-growth" class="panel hidden">
-    <div class="card">
-      <div class="card-head"><h2>🌱 연말 시상 — 종합 성장 포인트</h2><button class="hbtn" onclick="exportGrowth()">⬇ CSV</button></div>
-      <p class="note">출석 1회 10점 · 퀴즈 1회 응시 시 5점+정답률 보너스(최대 10점) · 암송 1과 완료 15점을 합산한 순위입니다.<br>단계: 🌱 씨앗(0) → 🌿 새싹(100) → 🌳 나무(250) → 🍇 열매(450)</p>
-      <div id="growth-wrap" class="tbl-wrap"><div class="empty">데이터를 불러오는 중...</div></div>
+  <div class="card">
+    <h2>🏆 학생별 퀴즈 기록</h2>
+    <div class="filter-row">
+      <select id="filter-lesson" onchange="renderTable()">
+        <option value="">전체 과</option>
+      </select>
+      <select id="filter-student" onchange="renderTable()">
+        <option value="">전체 학생</option>
+      </select>
     </div>
-  </section>
+    <div id="table-wrap">
+      <p style="color:#555;font-size:.9rem">데이터를 불러오는 중...</p>
+    </div>
+  </div>
 
-  <!-- 퀴즈 기록 -->
-  <section id="panel-quiz" class="panel hidden">
-    <div class="card">
-      <div class="card-head"><h2>🏆 학생별 퀴즈 기록</h2><button class="hbtn" onclick="exportQuiz()">⬇ CSV</button></div>
-      <div class="filters">
-        <input type="search" id="filter-q" placeholder="이름 검색" oninput="renderTable()">
-        <select id="filter-lesson" onchange="renderTable()"><option value="">전체 과</option></select>
-        <select id="filter-student" onchange="renderTable()"><option value="">전체 학생</option></select>
-      </div>
-      <div id="table-wrap"><div class="empty">데이터를 불러오는 중...</div></div>
+  <div class="card">
+    <h2>📅 이번 주 출석 현황</h2>
+    <div id="attend-wrap">
+      <p style="color:#555;font-size:.9rem">데이터를 불러오는 중...</p>
     </div>
-  </section>
-
-  <!-- 출석 -->
-  <section id="panel-attend" class="panel hidden">
-    <div class="card">
-      <div class="card-head"><h2>🙋 최근 6주 출석 현황</h2></div>
-      <div id="attend-wrap" class="tbl-wrap"><div class="empty">데이터를 불러오는 중...</div></div>
-    </div>
-  </section>
-
-  <!-- 회원 -->
-  <section id="panel-users" class="panel hidden">
-    <div class="card">
-      <div class="card-head"><h2>👥 회원 현황 (활성/비활성)</h2></div>
-      <div id="user-activity-wrap" class="tbl-wrap"><div class="empty">데이터를 불러오는 중...</div></div>
-    </div>
-  </section>
+  </div>
 </div>
-<div class="toast" id="toast"></div>
 
 <script>
 // ===== CONFIG =====
-const T_PW = 'daebong';                       // 관리자 비밀번호 (기존 값 유지)
-const T_AUTH_KEY = 'malsseumssiat_teacher_auth'; // 기존 로그인 상태 유지를 위해 키 이름 그대로 사용
+const T_PW = 'daebong';          // 교사 비밀번호
+const CONFIG_KEY = 'malsseumssiat_fb_config';
+const T_AUTH_KEY = 'malsseumssiat_teacher_auth';
 
 let db = null;
 let allData = [];
-let ctx = {attend:{}, mem:{}, users:{}};
-let lastGrowthRows = [];
-
-const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const $ = id => document.getElementById(id);
-function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),2200);}
-function sget(k){try{return localStorage.getItem(k);}catch(e){return null;}}
-function sset(k,v){try{localStorage.setItem(k,v);}catch(e){}}
-function sdel(k){try{localStorage.removeItem(k);}catch(e){}}
 
 // ===== LOGIN =====
-function adminLogin(){
-  if($('t-pw-input').value === T_PW){
-    sset(T_AUTH_KEY,'1');
-    enterBoard();
+function teacherLogin(){
+  const v = document.getElementById('t-pw-input').value;
+  if(v === T_PW){
+    localStorage.setItem(T_AUTH_KEY,'1');
+    document.getElementById('login-wrap').style.display='none';
+    initFirebase();
   }else{
-    $('t-pw-err').textContent = '비밀번호가 틀렸어요.';
-    $('t-pw-input').value = '';
-    $('t-pw-input').focus();
+    document.getElementById('t-pw-err').textContent = '비밀번호가 틀렸어요.';
+    document.getElementById('t-pw-input').value = '';
   }
 }
-function adminLogout(){
-  sdel(T_AUTH_KEY);
-  $('board').classList.add('hidden');
-  $('login-wrap').classList.remove('hidden');
-  $('t-pw-input').value='';$('t-pw-err').textContent='';
-}
-function enterBoard(){
-  $('login-wrap').classList.add('hidden');
-  $('board').classList.remove('hidden');
-  initFirebase();
-}
 
-// ===== TABS =====
-function showTab(name){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
-  ['overview','growth','quiz','attend','users'].forEach(n=>$('panel-'+n).classList.toggle('hidden',n!==name));
-  try{window.scrollTo({top:0,behavior:'smooth'});const a=document.querySelector('.tab.active');if(a&&a.scrollIntoView)a.scrollIntoView({inline:'center',block:'nearest'});}catch(e){}
-}
-
-// ===== FIREBASE =====
+// ===== FIREBASE CONFIG =====
 const HARDCODED_CONFIG = {
   apiKey: "AIzaSyCzXbLUt95DJw9O5zTSjgF7p5-Q7Nfg_dE",
   authDomain: "daebongteacher.firebaseapp.com",
@@ -299,220 +174,283 @@ const HARDCODED_CONFIG = {
   appId: "1:758425200131:web:f81b18d55f6472a5f55036",
   measurementId: "G-GZE29PGM0S"
 };
-function setAllMsg(html){
-  ['table-wrap','growth-wrap','attend-wrap','user-activity-wrap','todo-wrap','top-wrap'].forEach(id=>{const e=$(id);if(e)e.innerHTML=html;});
+function getConfig(){
+  return HARDCODED_CONFIG;
 }
-function loadScript(src){
-  return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error(src));document.head.appendChild(s);});
-}
-async function initFirebase(){
-  setAllMsg('<div class="empty">Firebase 연결 중...</div>');
+function saveConfig(){
+  const raw = document.getElementById('config-input').value.trim();
   try{
-    if(typeof firebase==='undefined'){
-      await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
-      await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js');
-    }
-    if(!firebase.apps.length) firebase.initializeApp(HARDCODED_CONFIG);
-    db = firebase.database();
-    loadData();
+    const cfg = JSON.parse(raw);
+    if(!cfg.apiKey) throw new Error('apiKey 없음');
+    localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
+    document.getElementById('config-wrap').style.display='none';
+    initFirebase();
   }catch(e){
-    setAllMsg('<div class="empty" style="color:var(--berry)">❌ Firebase를 불러오지 못했어요. 네트워크를 확인한 뒤 새로고침하세요.</div>');
+    document.getElementById('config-err').textContent = '설정이 올바르지 않아요. JSON 형식을 확인하세요.';
   }
+}
+function skipConfig(){
+  document.getElementById('config-wrap').style.display='none';
+  document.getElementById('dashboard').style.display='block';
+  document.getElementById('table-wrap').innerHTML='<p style="color:#555">Firebase 미연결 상태입니다. 설정 후 새로고침하세요.</p>';
+}
+
+function initFirebase(){
+  const cfg = HARDCODED_CONFIG;
+  // 항상 대시보드 표시
+  document.getElementById('config-wrap').style.display='none';
+  document.getElementById('dashboard').style.display='block';
+  document.getElementById('table-wrap').innerHTML='<p style="color:#555">Firebase 연결 중...</p>';
+  // Firebase SDK 동적 로드
+  const s1 = document.createElement('script');
+  s1.src = 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js';
+  s1.onerror = () => {
+    document.getElementById('table-wrap').innerHTML='<p style="color:#c62828">❌ Firebase SDK 로드 실패 (네트워크 확인)</p>';
+  };
+  s1.onload = () => {
+    const s2 = document.createElement('script');
+    s2.src = 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js';
+    s2.onerror = () => {
+      document.getElementById('table-wrap').innerHTML='<p style="color:#c62828">❌ Firebase Database SDK 로드 실패</p>';
+    };
+    s2.onload = () => {
+      try{
+        if(!firebase.apps.length) firebase.initializeApp(cfg);
+        db = firebase.database();
+        loadData();
+      }catch(e){
+        document.getElementById('table-wrap').innerHTML='<p style="color:#c62828">❌ Firebase 초기화 오류: '+e.message+'</p>';
+      }
+    };
+    document.head.appendChild(s2);
+  };
+  document.head.appendChild(s1);
 }
 
 // ===== LOAD DATA =====
 async function loadData(){
-  if(!db) return;
-  const btn=$('refresh-btn');btn.classList.add('spin');
+  if(!db){ return; }
+  document.getElementById('table-wrap').innerHTML='<p style="color:#555">불러오는 중...</p>';
   try{
-    const [qSnap,aSnap,mSnap,uSnap] = await Promise.all([
-      db.ref('quizResults').once('value'),
-      db.ref('attendance').once('value'),
-      db.ref('memComplete').once('value'),
-      db.ref('userActivity').once('value')
-    ]);
+    const snap = await db.ref('quizResults').once('value');
     allData = [];
-    qSnap.forEach(st=>{ st.forEach(rs=>{ allData.push({nick:st.key, ...rs.val()}); }); });
-    ctx = {attend:aSnap.val()||{}, mem:mSnap.val()||{}, users:uSnap.val()||{}};
+    snap.forEach(studentSnap => {
+      const nick = studentSnap.key;
+      studentSnap.forEach(resultSnap => {
+        const r = resultSnap.val();
+        allData.push({nick, ...r});
+      });
+    });
+    // attendance
+    const aSnap = await db.ref('attendance').once('value');
+    const attendData = aSnap.val()||{};
+    // 암송 완료
+    const mSnap = await db.ref('memComplete').once('value');
+    const memData = mSnap.val()||{};
+    // 회원 현황 (활성/비활성)
+    const uaSnap = await db.ref('userActivity').once('value');
+    const userActivity = uaSnap.val()||{};
+    renderSummary(allData, attendData);
+    renderTable();
+    renderAttendance(attendData);
+    renderUserActivity(userActivity);
+    renderGrowth(allData, attendData, memData);
     populateFilters();
-    renderAll();
-    const d=new Date();
-    $('updated').innerHTML='마지막 갱신<br>'+d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
   }catch(e){
-    setAllMsg('<div class="empty" style="color:var(--berry)">오류: '+esc(e.message)+'</div>');
-  }finally{btn.classList.remove('spin');}
-}
-function renderAll(){
-  const g=computeGrowth();
-  lastGrowthRows=g;
-  renderOverview(g);
-  renderGrowth(g);
-  renderTable();
-  renderAttendance();
-  renderUserActivity();
-}
-
-// ===== 공통 계산 =====
-const GROWTH_TIERS=[{min:0,emoji:'🌱',name:'씨앗'},{min:100,emoji:'🌿',name:'새싹'},{min:250,emoji:'🌳',name:'나무'},{min:450,emoji:'🍇',name:'열매'}];
-function growthTierOf(total){let t=GROWTH_TIERS[0];for(const x of GROWTH_TIERS){if(total>=x.min)t=x;}return t;}
-function nextTierOf(total){return GROWTH_TIERS.find(t=>t.min>total)||null;}
-function getWeekKey(date){const d=new Date(date);const day=d.getDay();const sun=new Date(d);sun.setDate(d.getDate()-day);return sun.toISOString().slice(0,10);}
-function scoreCls(n){return n===100?'s-100':n>=80?'s-80':n>=60?'s-60':'s-low';}
-function allNicks(){
-  return new Set([...Object.keys(ctx.attend||{}),...Object.keys(ctx.mem||{}),...Object.keys(ctx.users||{}),...allData.map(r=>r.nick)]);
-}
-function computeGrowth(){
-  const nicks=new Set([...Object.keys(ctx.attend||{}),...Object.keys(ctx.mem||{}),...allData.map(r=>r.nick)]);
-  return [...nicks].map(nick=>{
-    const attendCnt=Array.isArray(ctx.attend[nick])?ctx.attend[nick].length:0;
-    const memCnt=Array.isArray(ctx.mem[nick])?ctx.mem[nick].length:0;
-    const my=allData.filter(r=>r.nick===nick);
-    const quizPoints=my.reduce((s,r)=>s+5+Math.round((r.score||0)/10),0);
-    const total=attendCnt*10+quizPoints+memCnt*15;
-    return {nick,attendCnt,quizCnt:my.length,memCnt,attendPoints:attendCnt*10,quizPoints,memPoints:memCnt*15,total,tier:growthTierOf(total),next:nextTierOf(total)};
-  }).sort((a,b)=>b.total-a.total);
-}
-function userRows(){
-  const now=Date.now(),WEEK=7*24*3600*1000;
-  return Object.keys(ctx.users||{}).map(nick=>{
-    const d=ctx.users[nick]||{};
-    return {nick,first:d.first?new Date(d.first).toLocaleDateString('ko-KR'):'-',
-      last:d.lastDateStr||(d.last?new Date(d.last).toLocaleDateString('ko-KR'):'-'),
-      lastTs:d.last||0,active:!!(d.last&&(now-d.last)<=WEEK)};
-  }).sort((a,b)=>b.lastTs-a.lastTs);
-}
-
-// ===== 한눈에 =====
-function renderOverview(g){
-  const students=allNicks();
-  const wk=getWeekKey(new Date());
-  const attended=Object.keys(ctx.attend).filter(n=>Array.isArray(ctx.attend[n])&&ctx.attend[n].includes(wk));
-  const avg=allData.length?Math.round(allData.reduce((a,b)=>a+(b.score||0),0)/allData.length):0;
-  const memTotal=Object.values(ctx.mem).reduce((s,a)=>s+(Array.isArray(a)?a.length:0),0);
-  const users=userRows(); const active=users.filter(u=>u.active);
-  $('k-students').innerHTML=students.size+'<small>명</small>';
-  $('k-attend').innerHTML=attended.length+'<small>명</small>';
-  $('k-attend-h').textContent=students.size?('전체 '+students.size+'명 중 '+Math.round(attended.length/students.size*100)+'%'):'';
-  $('k-active').innerHTML=active.length+'<small>/ '+users.length+'</small>';
-  $('k-quizzes').innerHTML=allData.length+'<small>회</small>';
-  $('k-avg-h').textContent=allData.length?('전체 평균 '+avg+'점'):'';
-  $('k-mem').innerHTML=memTotal+'<small>과</small>';
-
-  // 챙겨볼 일
-  const todos=[];
-  const absent=[...students].filter(n=>!attended.includes(n)&&(ctx.attend[n]||allData.some(r=>r.nick===n)));
-  if(absent.length) todos.push({c:'warn',i:'🙋',t:'이번 주 아직 출석 체크 안 한 학생 '+absent.length+'명',d:absent.slice(0,12).map(n=>'<span class="chip">'+esc(n)+'</span>').join('')+(absent.length>12?' 외 '+(absent.length-12)+'명':'')});
-  const inactive=users.filter(u=>!u.active);
-  if(inactive.length) todos.push({c:'warn',i:'💤',t:'최근 7일 접속 없는 회원 '+inactive.length+'명',d:inactive.slice(0,12).map(u=>'<span class="chip">'+esc(u.nick)+' · '+esc(u.last)+'</span>').join('')+(inactive.length>12?' 외 '+(inactive.length-12)+'명':'')});
-  const low=allData.filter(r=>(r.score||0)<60);
-  if(low.length){
-    const byL={};low.forEach(r=>{byL[r.lesson]=(byL[r.lesson]||0)+1;});
-    const top=Object.entries(byL).sort((a,b)=>b[1]-a[1]).slice(0,3);
-    todos.push({c:'',i:'📉',t:'60점 미만 퀴즈 '+low.length+'건',d:'많이 틀린 과: '+top.map(([l,c])=>'<span class="chip">'+esc(l)+'과 · '+c+'건</span>').join('')});
+    document.getElementById('table-wrap').innerHTML='<p style="color:#c62828">오류: '+e.message+'</p>';
   }
-  const near=g.filter(r=>r.next&&(r.next.min-r.total)<=15&&r.total>0);
-  if(near.length) todos.push({c:'ok',i:'🌿',t:'곧 다음 단계가 되는 학생 '+near.length+'명',d:near.slice(0,8).map(r=>'<span class="chip">'+esc(r.nick)+' → '+r.next.emoji+' '+(r.next.min-r.total)+'점</span>').join('')});
-  if(!todos.length) todos.push({c:'ok',i:'✅',t:'지금은 특별히 챙길 일이 없어요',d:'출석·접속·퀴즈 모두 양호합니다.'});
-  $('todo-wrap').innerHTML='<div class="todo">'+todos.map(x=>'<div class="todo-item '+x.c+'"><div class="ti">'+x.i+'</div><div><div class="tt">'+x.t+'</div><div class="td">'+x.d+'</div></div></div>').join('')+'</div>';
-
-  // TOP 5
-  const medals=['🥇','🥈','🥉'];
-  $('top-wrap').innerHTML=g.length?'<table style="min-width:0"><tbody>'+g.slice(0,5).map((r,i)=>'<tr><td class="c" style="width:44px;font-size:1.1rem">'+(medals[i]||(i+1))+'</td><td><strong>'+esc(r.nick)+'</strong><div style="font-size:.74rem;color:var(--sub)">'+r.tier.emoji+' '+r.tier.name+'</div></td><td class="c"><span class="badge s-100">'+r.total+'점</span></td></tr>').join('')+'</tbody></table>':'<div class="empty">아직 활동 기록이 없어요.</div>';
 }
 
-// ===== 성장·시상 =====
-function renderGrowth(g){
-  const wrap=$('growth-wrap');
-  if(!g.length){wrap.innerHTML='<div class="empty">아직 활동 기록이 없어요.</div>';return;}
-  const max=Math.max(1,g[0].total);const medals=['🥇','🥈','🥉'];
-  wrap.innerHTML='<table><thead><tr><th class="c">순위</th><th>이름</th><th>단계</th><th>총점</th><th></th><th class="c">출석</th><th class="c">퀴즈</th><th class="c">암송</th></tr></thead><tbody>'+
-    g.map((r,i)=>'<tr><td class="c">'+(medals[i]||(i+1))+'</td><td><strong>'+esc(r.nick)+'</strong></td><td>'+r.tier.emoji+' '+r.tier.name+'</td><td><span class="badge s-100">'+r.total+'점</span></td><td style="width:22%"><div class="bar"><i style="width:'+Math.max(4,Math.round(r.total/max*100))+'%"></i></div></td><td class="c num">'+r.attendCnt+'회</td><td class="c num">'+r.quizCnt+'회</td><td class="c num">'+r.memCnt+'과</td></tr>').join('')+'</tbody></table>';
-}
-
-// ===== 퀴즈 기록 =====
 function populateFilters(){
-  const lessons=[...new Set(allData.map(r=>r.lesson))].sort((a,b)=>a-b);
-  const students=[...new Set(allData.map(r=>r.nick))].sort();
-  const lv=$('filter-lesson').value, sv=$('filter-student').value;
-  $('filter-lesson').innerHTML='<option value="">전체 과</option>'+lessons.map(l=>'<option value="'+esc(l)+'">'+esc(l)+'과</option>').join('');
-  $('filter-student').innerHTML='<option value="">전체 학생</option>'+students.map(s=>'<option value="'+esc(s)+'">'+esc(s)+'</option>').join('');
-  $('filter-lesson').value=lv;$('filter-student').value=sv;
+  const lessons = [...new Set(allData.map(r=>r.lesson))].sort((a,b)=>a-b);
+  const students = [...new Set(allData.map(r=>r.nick))].sort();
+  const lSel = document.getElementById('filter-lesson');
+  const sSel = document.getElementById('filter-student');
+  lSel.innerHTML = '<option value="">전체 과</option>' + lessons.map(l=>`<option value="${l}">${l}과</option>`).join('');
+  sSel.innerHTML = '<option value="">전체 학생</option>' + students.map(s=>`<option value="${s}">${s}</option>`).join('');
 }
-function filteredQuiz(){
-  const lf=$('filter-lesson').value, sf=$('filter-student').value, q=$('filter-q').value.trim();
-  let rows=allData;
-  if(lf) rows=rows.filter(r=>String(r.lesson)===lf);
-  if(sf) rows=rows.filter(r=>r.nick===sf);
-  if(q) rows=rows.filter(r=>r.nick.includes(q));
-  return rows.slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+function renderSummary(data, attendData){
+  const students = new Set(data.map(r=>r.nick));
+  const avg = data.length ? Math.round(data.reduce((a,b)=>a+b.score,0)/data.length) : 0;
+  const thisWk = getWeekKey(new Date());
+  const attendThisWk = Object.values(attendData).filter(weeks => Array.isArray(weeks) ? weeks.includes(thisWk) : false).length;
+  document.getElementById('s-students').textContent = students.size;
+  document.getElementById('s-quizzes').textContent = data.length;
+  document.getElementById('s-avg').textContent = avg+'점';
+  document.getElementById('s-attend').textContent = attendThisWk+'명';
 }
-function recTable(rows){
-  return '<div class="tbl-wrap"><table><thead><tr><th>학생</th><th class="c">과</th><th class="c">점수</th><th>날짜</th></tr></thead><tbody>'+rows.map(r=>'<tr><td><strong>'+esc(r.nick)+'</strong></td><td class="c num">'+esc(r.lesson)+'과</td><td class="c"><span class="badge '+scoreCls(r.score)+'">'+esc(r.score)+'점</span></td><td class="date">'+esc(r.date||'')+'</td></tr>').join('')+'</tbody></table></div>';
-}
+
 function renderTable(){
-  const rows=filteredQuiz();
-  const wrap=$('table-wrap');
-  if(!rows.length){wrap.innerHTML='<div class="empty">조건에 맞는 기록이 없어요.</div>';return;}
-  const noFilter=!$('filter-lesson').value&&!$('filter-student').value&&!$('filter-q').value.trim();
-  if(!noFilter){wrap.innerHTML=recTable(rows);return;}
-  const by={};
-  rows.forEach(r=>{const b=by[r.nick]||(by[r.nick]={nick:r.nick,total:0,cnt:0,last:''});b.total+=r.score||0;b.cnt++;if(!b.last||r.date>b.last)b.last=r.date;});
-  const summary=Object.values(by).sort((a,b)=>(b.total/b.cnt)-(a.total/a.cnt));
-  const medals=['🥇','🥈','🥉'];
-  wrap.innerHTML='<div class="sec-sub">👥 학생별 요약</div><div class="tbl-wrap"><table><thead><tr><th>이름</th><th class="c">평균점수</th><th class="c">참여횟수</th><th>마지막 활동</th></tr></thead><tbody>'+
-    summary.map((s,i)=>{const avg=Math.round(s.total/s.cnt);return '<tr><td><strong>'+(medals[i]||'')+' '+esc(s.nick)+'</strong></td><td class="c"><span class="badge '+scoreCls(avg)+'">'+avg+'점</span></td><td class="c num">'+s.cnt+'회</td><td class="date">'+esc(s.last||'-')+'</td></tr>';}).join('')+
-    '</tbody></table></div><div class="sec-sub">📋 전체 기록 ('+rows.length+'건)</div>'+recTable(rows);
-}
-
-// ===== 출석 =====
-function renderAttendance(){
-  const wrap=$('attend-wrap');
-  const nicks=Object.keys(ctx.attend);
-  if(!nicks.length){wrap.innerHTML='<div class="empty">출석 기록이 없어요.</div>';return;}
-  const weeks=[];for(let i=5;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i*7);weeks.push(getWeekKey(d));}
-  const rows=nicks.map(n=>{const w=Array.isArray(ctx.attend[n])?ctx.attend[n]:[];return {n,w,cnt:weeks.filter(k=>w.includes(k)).length,total:w.length};}).sort((a,b)=>b.cnt-a.cnt||b.total-a.total);
-  wrap.innerHTML='<table class="stick"><thead><tr><th>학생</th>'+weeks.map((_,i)=>'<th class="c">'+(i===5?'이번 주':(5-i)+'주 전')+'</th>').join('')+'<th class="c">6주 출석</th><th class="c">누적</th></tr></thead><tbody>'+
-    rows.map(r=>'<tr><td><strong>'+esc(r.n)+'</strong></td>'+weeks.map((k,i)=>'<td class="c">'+(r.w.includes(k)?'✅':'<span style="color:#c9c4b3">–</span>')+'</td>').join('')+'<td class="c"><span class="badge '+(r.cnt>=5?'s-100':r.cnt>=3?'s-60':'s-low')+'">'+r.cnt+'/6</span></td><td class="c num">'+r.total+'회</td></tr>').join('')+'</tbody></table>';
-}
-
-// ===== 회원 =====
-function renderUserActivity(){
-  const wrap=$('user-activity-wrap');
-  const rows=userRows();
-  const cnt=$('users-cnt');
-  if(!rows.length){
-    wrap.innerHTML='<div class="empty">아직 접속 기록이 없어요. (이 기능 업데이트 이후 접속한 사용자부터 기록됩니다)</div>';
-    cnt.classList.add('hidden');return;
+  const lf = document.getElementById('filter-lesson').value;
+  const sf = document.getElementById('filter-student').value;
+  let rows = allData;
+  if(lf) rows = rows.filter(r=>String(r.lesson)===lf);
+  if(sf) rows = rows.filter(r=>r.nick===sf);
+  rows = rows.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if(rows.length===0){
+    document.getElementById('table-wrap').innerHTML='<p style="color:#555;font-size:.9rem">아직 기록이 없어요.</p>';
+    return;
   }
-  const active=rows.filter(r=>r.active).length;
-  cnt.textContent=active+'/'+rows.length;cnt.classList.remove('hidden');
-  wrap.innerHTML='<p class="note">총 '+rows.length+'명 중 <strong style="color:var(--green2)">'+active+'명 활성</strong> (최근 7일 이내 접속 기준)</p><table><thead><tr><th>별명</th><th>최초 접속</th><th>마지막 접속</th><th class="c">상태</th></tr></thead><tbody>'+
-    rows.map(r=>'<tr><td><strong>'+esc(r.nick)+'</strong></td><td class="date">'+esc(r.first)+'</td><td class="date">'+esc(r.last)+'</td><td class="c">'+(r.active?'<span class="badge s-100">🟢 활성</span>':'<span class="badge s-off">⚪ 비활성</span>')+'</td></tr>').join('')+'</tbody></table>';
+
+  // 학생별 요약 (필터 없을 때)
+  if(!lf && !sf){
+    const byNick={};
+    rows.forEach(r=>{
+      if(!byNick[r.nick]) byNick[r.nick]={nick:r.nick,total:0,cnt:0,last:''};
+      byNick[r.nick].total+=r.score;
+      byNick[r.nick].cnt++;
+      if(!byNick[r.nick].last||r.date>byNick[r.nick].last) byNick[r.nick].last=r.date;
+    });
+    const summary=Object.values(byNick).sort((a,b)=>(b.total/b.cnt)-(a.total/a.cnt));
+    const summaryHtml=`<h3 style="margin-bottom:10px;color:#2e7d32;font-size:.95rem">👥 학생별 요약</h3>
+      <table style="margin-bottom:20px">
+        <thead><tr><th>이름</th><th>평균점수</th><th>참여횟수</th><th>마지막 활동</th></tr></thead>
+        <tbody>${summary.map((s,i)=>{
+          const avg=Math.round(s.total/s.cnt);
+          const cls=avg===100?'s-100':avg>=80?'s-80':avg>=60?'s-60':'s-low';
+          const medals=['🥇','🥈','🥉'];
+          return `<tr><td><strong>${medals[i]||''} ${s.nick}</strong></td>
+            <td><span class="score-badge ${cls}">${avg}점</span></td>
+            <td style="text-align:center">${s.cnt}회</td>
+            <td style="color:#888;font-size:.82rem">${s.last||'-'}</td></tr>`;
+        }).join('')}</tbody>
+      </table>`;
+    document.getElementById('table-wrap').innerHTML=summaryHtml+`
+      <h3 style="margin-bottom:10px;color:#2e7d32;font-size:.95rem">📋 전체 기록</h3>
+      <table>
+        <thead><tr><th>학생</th><th>과</th><th>점수</th><th>날짜</th></tr></thead>
+        <tbody>${rows.map(r=>{
+          const sc=r.score;
+          const cls=sc===100?'s-100':sc>=80?'s-80':sc>=60?'s-60':'s-low';
+          return `<tr><td><strong>${r.nick}</strong></td><td>${r.lesson}과</td>
+            <td><span class="score-badge ${cls}">${sc}점</span></td><td>${r.date||''}</td></tr>`;
+        }).join('')}</tbody>
+      </table>`;
+  } else {
+    document.getElementById('table-wrap').innerHTML=`
+      <table>
+        <thead><tr><th>학생</th><th>과</th><th>점수</th><th>날짜</th></tr></thead>
+        <tbody>${rows.map(r=>{
+          const sc=r.score;
+          const cls=sc===100?'s-100':sc>=80?'s-80':sc>=60?'s-60':'s-low';
+          return `<tr><td><strong>${r.nick}</strong></td><td>${r.lesson}과</td>
+            <td><span class="score-badge ${cls}">${sc}점</span></td><td>${r.date||''}</td></tr>`;
+        }).join('')}</tbody>
+      </table>`;
+  }
 }
 
-// ===== CSV 내보내기 =====
-function downloadCSV(name,rows){
-  const csv='﻿'+rows.map(r=>r.map(v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=name;
-  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);
-  toast('CSV를 내려받았어요');
+function renderAttendance(attendData){
+  const students = Object.keys(attendData);
+  if(students.length===0){
+    document.getElementById('attend-wrap').innerHTML='<p style="color:#555;font-size:.9rem">출석 기록이 없어요.</p>';
+    return;
+  }
+  const last6 = [];
+  for(let i=5;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i*7);last6.push(getWeekKey(d));}
+  document.getElementById('attend-wrap').innerHTML=`
+    <table>
+      <thead><tr><th>학생</th>${last6.map((_,i)=>`<th>${i===5?'이번 주':-(5-i)+'주 전'}</th>`).join('')}</tr></thead>
+      <tbody>${students.map(nick=>{
+        const weeks = attendData[nick]||[];
+        return `<tr><td><strong>${nick}</strong></td>${last6.map(wk=>
+          `<td style="text-align:center">${weeks.includes(wk)?'✅':'-'}</td>`).join('')}</tr>`;
+      }).join('')}</tbody>
+    </table>`;
 }
-function stamp(){return new Date().toISOString().slice(0,10);}
-function exportGrowth(){
-  if(!lastGrowthRows.length){toast('내보낼 데이터가 없어요');return;}
-  downloadCSV('말씀씨앗_성장순위_'+stamp()+'.csv',[['순위','이름','단계','총점','출석횟수','출석점수','퀴즈횟수','퀴즈점수','암송과수','암송점수']].concat(lastGrowthRows.map((r,i)=>[i+1,r.nick,r.tier.name,r.total,r.attendCnt,r.attendPoints,r.quizCnt,r.quizPoints,r.memCnt,r.memPoints])));
+
+function renderUserActivity(userActivity){
+  const wrap = document.getElementById('user-activity-wrap');
+  if(!wrap) return;
+  const nicks = Object.keys(userActivity);
+  if(nicks.length===0){
+    wrap.innerHTML = '<p style="color:#555;font-size:.9rem">아직 접속 기록이 없어요. (이 기능 업데이트 이후 접속한 사용자부터 기록됩니다)</p>';
+    return;
+  }
+  const now = Date.now();
+  const WEEK_MS = 7*24*60*60*1000;
+  const rows = nicks.map(nick=>{
+    const d = userActivity[nick]||{};
+    const firstStr = d.first ? new Date(d.first).toLocaleDateString('ko-KR') : '-';
+    const lastStr = d.lastDateStr || (d.last ? new Date(d.last).toLocaleDateString('ko-KR') : '-');
+    const active = !!(d.last && (now - d.last) <= WEEK_MS);
+    return {nick, firstStr, lastStr, lastTs:d.last||0, active};
+  }).sort((a,b)=>b.lastTs-a.lastTs);
+  const activeCount = rows.filter(r=>r.active).length;
+  wrap.innerHTML = '<p style="color:#555;font-size:.85rem;margin-bottom:10px">총 ' + rows.length + '명 중 <strong style="color:#2e7d32">' + activeCount + '명 활성</strong> (최근 7일 이내 접속 기준)</p>'
+    + '<table><thead><tr><th>별명</th><th>최초 접속</th><th>마지막 접속</th><th>상태</th></tr></thead><tbody>'
+    + rows.map(r=>{
+        const badge = r.active
+          ? '<span class="score-badge s-100">🟢 활성</span>'
+          : '<span class="score-badge s-low">⚪ 비활성</span>';
+        return '<tr><td><strong>'+r.nick+'</strong></td><td>'+r.firstStr+'</td><td>'+r.lastStr+'</td><td>'+badge+'</td></tr>';
+      }).join('')
+    + '</tbody></table>';
 }
-function exportQuiz(){
-  const rows=filteredQuiz();
-  if(!rows.length){toast('내보낼 데이터가 없어요');return;}
-  downloadCSV('말씀씨앗_퀴즈기록_'+stamp()+'.csv',[['학생','과','점수','날짜']].concat(rows.map(r=>[r.nick,r.lesson,r.score,r.date||''])));
+
+const GROWTH_TIERS=[
+  {min:0,   emoji:'🌱',name:'씨앗'},
+  {min:100, emoji:'🌿',name:'새싹'},
+  {min:250, emoji:'🌳',name:'나무'},
+  {min:450, emoji:'🍇',name:'열매'}
+];
+function growthTierOf(total){
+  let tier=GROWTH_TIERS[0];
+  for(const t of GROWTH_TIERS){ if(total>=t.min) tier=t; }
+  return tier;
+}
+function renderGrowth(quizRows, attendData, memData){
+  const wrap = document.getElementById('growth-wrap');
+  if(!wrap) return;
+  const nicks = new Set([
+    ...Object.keys(attendData||{}),
+    ...Object.keys(memData||{}),
+    ...quizRows.map(r=>r.nick)
+  ]);
+  if(nicks.size===0){
+    wrap.innerHTML = '<p style="color:#555;font-size:.9rem">아직 활동 기록이 없어요.</p>';
+    return;
+  }
+  const rows = [...nicks].map(nick=>{
+    const attendCnt = Array.isArray(attendData[nick]) ? attendData[nick].length : 0;
+    const memCnt = Array.isArray(memData[nick]) ? memData[nick].length : 0;
+    const myQuiz = quizRows.filter(r=>r.nick===nick);
+    const quizCnt = myQuiz.length;
+    const quizPoints = myQuiz.reduce((s,r)=>s+5+Math.round((r.score||0)/10),0);
+    const attendPoints = attendCnt*10;
+    const memPoints = memCnt*15;
+    const total = attendPoints+quizPoints+memPoints;
+    return {nick, attendCnt, quizCnt, memCnt, total, tier:growthTierOf(total)};
+  }).sort((a,b)=>b.total-a.total);
+  const medals=['🥇','🥈','🥉'];
+  wrap.innerHTML = `<table>
+    <thead><tr><th>순위</th><th>이름</th><th>단계</th><th>총점</th><th>출석</th><th>퀴즈</th><th>암송</th></tr></thead>
+    <tbody>${rows.map((r,i)=>`
+      <tr><td style="text-align:center">${medals[i]||i+1}</td>
+        <td><strong>${r.nick}</strong></td>
+        <td>${r.tier.emoji} ${r.tier.name}</td>
+        <td><span class="score-badge s-100">${r.total}점</span></td>
+        <td style="text-align:center">${r.attendCnt}회</td>
+        <td style="text-align:center">${r.quizCnt}회</td>
+        <td style="text-align:center">${r.memCnt}과</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+function getWeekKey(date){
+  const d=new Date(date);const day=d.getDay();const sun=new Date(d);
+  sun.setDate(d.getDate()-day);return sun.toISOString().slice(0,10);
 }
 
 // ===== INIT =====
-window.addEventListener('load',function(){
-  if(sget(T_AUTH_KEY)==='1') enterBoard();
-  else $('t-pw-input').focus();
-});
+window.onload = function(){
+  if(localStorage.getItem(T_AUTH_KEY)==='1'){
+    document.getElementById('login-wrap').style.display='none';
+    initFirebase();
+  }
+};
 </script>
 </body>
 </html>
