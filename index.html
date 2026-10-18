@@ -3659,11 +3659,31 @@ function adminUploadPhotos(){
   });
 }
 
+// 사진 전처리: 큰 사진은 줄여서(긴 변 2400px, JPEG) 올리고, 형식을 못 읽는 사진(HEIC 등)은 원본에 형식 이름을 붙여 올림
+function prepPhoto(file){
+  var extMap={jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',gif:'image/gif',webp:'image/webp',heic:'image/heic',heif:'image/heif'};
+  var ext=(file.name.split('.').pop()||'').toLowerCase();
+  var origType=file.type||extMap[ext]||'image/jpeg';
+  var orig={blob:file,type:origType};
+  if(!window.createImageBitmap) return Promise.resolve(orig);
+  return createImageBitmap(file).then(function(bmp){
+    var MAX=2400, sc=Math.min(1, MAX/Math.max(bmp.width,bmp.height));
+    if(sc===1 && file.size<4*1024*1024 && file.type) return orig;
+    var c=document.createElement('canvas'); c.width=Math.round(bmp.width*sc); c.height=Math.round(bmp.height*sc);
+    c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);
+    return new Promise(function(res){
+      c.toBlob(function(b){ res(b?{blob:b,type:'image/jpeg'}:orig); },'image/jpeg',0.88);
+    });
+  }).catch(function(){ return orig; });
+}
+
 function uploadOnePhoto(file, title, date, idx, total, prog){
   return new Promise(function(resolve, reject){
     var safeName = date + '_' + idx + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
     var ref = window._fbStorage.ref('photos/' + date + '/' + safeName);
-    ref.put(file).then(function(snap){
+    prepPhoto(file).then(function(p){
+      return ref.put(p.blob,{contentType:p.type});
+    }).then(function(snap){
       return snap.ref.getDownloadURL();
     }).then(function(url){
       if(prog) prog.textContent = '업로드 중... (' + (idx+1) + '/' + total + ')';
@@ -3762,7 +3782,9 @@ function uploadNoticePhoto(file, idx, total, prog){
   return new Promise(function(resolve, reject){
     var safeName = Date.now() + '_' + idx + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
     var ref = window._fbStorage.ref('notices/' + safeName);
-    ref.put(file).then(function(snap){
+    prepPhoto(file).then(function(p){
+      return ref.put(p.blob,{contentType:p.type});
+    }).then(function(snap){
       return snap.ref.getDownloadURL();
     }).then(function(url){
       if(prog) prog.textContent = '사진 업로드 중... (' + (idx+1) + '/' + total + ')';
