@@ -1,7 +1,7 @@
 // 말씀씨앗 Service Worker v2.0
 // Network First 전략 — 항상 최신 콘텐츠, 오프라인 폴백
 
-const CACHE_NAME = 'malsseumssiaat-v19-20261109';
+const CACHE_NAME = 'malsseumssiaat-v20-20261113';
 const ASSETS = [
   './말씀씨앗.html',
   './manifest.json'
